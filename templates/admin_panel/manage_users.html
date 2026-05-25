@@ -70,7 +70,7 @@
                                 <!-- Controls -->
                                 <td class="py-3 text-end">
                                     {% if u != request.user %}
-                                        <div class="d-flex justify-content-end flex-wrap gap-2">
+                                        <div class="d-flex justify-content-end flex-wrap gap-2 action-buttons-container">
                                             <a href="{% url 'admin_toggle_user' u.id %}" class="btn {% if u.is_active %}btn-admin-outline{% else %}btn-admin-success{% endif %} btn-sm py-1.5 px-3 text-nowrap" title="{% if u.is_active %}Block Account{% else %}Unblock Account{% endif %}">
                                                 {% if u.is_active %}
                                                     <i class="bi bi-person-slash me-1"></i> Block

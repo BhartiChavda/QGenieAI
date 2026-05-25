@@ -38,7 +38,7 @@
             
             <!-- Quick Actions -->
             {% if target_user != request.user %}
-                <div class="d-flex gap-2">
+                <div class="d-flex gap-2 action-buttons-container">
                     <a href="{% url 'admin_toggle_user' target_user.id %}" class="btn {% if target_user.is_active %}btn-admin-outline{% else %}btn-admin-success{% endif %} py-2 px-3">
                         {% if target_user.is_active %}
                             <i class="bi bi-person-x-fill me-1"></i> Suspend Account

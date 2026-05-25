@@ -540,12 +540,12 @@ footer {
         width: 100%;
         text-align: center;
     }
-    .nav-item ms-lg-3, .d-flex.align-items-center.gap-2 {
+    .action-buttons-container, .user-actions-group {
         flex-direction: column;
         width: 100%;
         align-items: stretch !important;
     }
-    .d-flex.align-items-center.gap-2 a {
+    .action-buttons-container a, .user-actions-group a {
         width: 100%;
         justify-content: center;
     }
@@ -586,6 +586,48 @@ footer {
     }
     .glass-card, .card {
         padding: 2rem !important;
+    }
+}
+
+@media (max-width: 991.98px) {
+    .navbar-nav {
+        align-items: flex-start !important;
+        padding-top: 1rem;
+    }
+    .navbar-nav .nav-item {
+        width: 100%;
+        margin-bottom: 0.5rem;
+    }
+    .navbar-nav .nav-item.ms-lg-3 {
+        margin-left: 0 !important;
+        margin-top: 1rem;
+        flex-direction: column;
+        align-items: stretch !important;
+        border-top: 1px solid rgba(255,255,255,0.1);
+        padding-top: 1rem;
+    }
+    .navbar-nav .dropdown-menu-custom {
+        background-color: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        padding-left: 1.5rem !important;
+    }
+    .gen-card {
+        flex-direction: column;
+        align-items: flex-start !important;
+        gap: 0.8rem !important;
+    }
+    .gen-card .ms-auto {
+        margin-left: 0 !important;
+        width: 100%;
+        margin-top: 0.5rem;
+    }
+    .gen-card .ms-auto .action-link {
+        flex: 1;
+        text-align: center;
+        justify-content: center;
+        display: flex;
+        align-items: center;
     }
 }
 
