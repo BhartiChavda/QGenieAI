@@ -1,0 +1,504 @@
+{% extends 'user_panel/base.html' %}
+{% load static %}
+
+{% block title %}Generated Content - {{ file_obj.title }} - QGenie.AI{% endblock %}
+
+{% block extra_css %}
+<style>
+    .review-hero {
+        background: linear-gradient(135deg, rgba(99,102,241,0.12) 0%, rgba(168,85,247,0.08) 100%);
+        border: 1px solid rgba(99,102,241,0.2);
+        border-radius: 18px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+    }
+
+    .section-title {
+        font-family: 'Outfit', sans-serif;
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: #f8fafc;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .q-card {
+        background: rgba(17,20,38,0.7);
+        border: 1px solid rgba(255,255,255,0.07);
+        border-radius: 14px;
+        padding: 1.4rem 1.6rem;
+        transition: all 0.25s ease;
+        margin-bottom: 1rem;
+    }
+    .q-card:hover {
+        border-color: rgba(99,102,241,0.3);
+        box-shadow: 0 8px 25px rgba(99,102,241,0.08);
+        transform: translateY(-2px);
+    }
+
+    .q-number {
+        width: 32px; height: 32px;
+        background: linear-gradient(135deg, #6366f1, #a855f7);
+        border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 0.8rem; font-weight: 700; color: white;
+        flex-shrink: 0;
+    }
+
+    .option-badge {
+        display: inline-block;
+        width: 26px; height: 26px;
+        border-radius: 50%;
+        text-align: center; line-height: 26px;
+        font-size: 0.75rem; font-weight: 700;
+        background: rgba(99,102,241,0.15);
+        color: #a5b4fc;
+        border: 1px solid rgba(99,102,241,0.25);
+        margin-right: 0.5rem;
+        flex-shrink: 0;
+    }
+
+    .correct-option {
+        background: rgba(16,185,129,0.12);
+        border-color: rgba(16,185,129,0.35);
+        border-radius: 8px;
+        padding: 0.5rem 0.75rem;
+    }
+
+    .correct-option .option-badge {
+        background: rgba(16,185,129,0.25);
+        color: #6ee7b7;
+        border-color: rgba(16,185,129,0.4);
+    }
+
+    .answer-box {
+        background: rgba(99,102,241,0.06);
+        border-left: 3px solid #6366f1;
+        border-radius: 0 8px 8px 0;
+        padding: 0.75rem 1rem;
+        margin-top: 0.75rem;
+        font-size: 0.9rem;
+        color: #cbd5e1;
+        line-height: 1.6;
+    }
+
+    .action-bar {
+        background: rgba(17,20,38,0.9);
+        border: 1px solid rgba(255,255,255,0.07);
+        border-radius: 14px;
+        padding: 1.2rem 1.5rem;
+        position: sticky;
+        top: 80px;
+        z-index: 10;
+    }
+
+    .btn-copy {
+        background: rgba(99,102,241,0.1);
+        border: 1px solid rgba(99,102,241,0.3);
+        color: #a5b4fc;
+        padding: 0.5rem 1.1rem;
+        border-radius: 8px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: inline-flex; align-items: center; gap: 0.4rem;
+    }
+    .btn-copy:hover {
+        background: rgba(99,102,241,0.2);
+        border-color: #6366f1;
+        color: white;
+    }
+    .btn-copy.copied {
+        background: rgba(16,185,129,0.15);
+        border-color: rgba(16,185,129,0.4);
+        color: #6ee7b7;
+    }
+
+    .btn-download {
+        background: linear-gradient(135deg, #6366f1, #a855f7);
+        border: none;
+        color: white;
+        padding: 0.5rem 1.2rem;
+        border-radius: 8px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: inline-flex; align-items: center; gap: 0.4rem;
+    }
+    .btn-download:hover {
+        opacity: 0.9;
+        transform: translateY(-1px);
+        box-shadow: 0 6px 18px rgba(99,102,241,0.3);
+        color: white;
+    }
+
+    .tab-section-btn {
+        background: transparent;
+        border: 1px solid rgba(255,255,255,0.1);
+        color: #94a3b8;
+        border-radius: 8px;
+        padding: 0.5rem 1.2rem;
+        font-size: 0.9rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    .tab-section-btn.active {
+        background: linear-gradient(135deg, rgba(99,102,241,0.2), rgba(168,85,247,0.15));
+        border-color: rgba(99,102,241,0.4);
+        color: #a5b4fc;
+    }
+
+    .explanation-pill {
+        font-size: 0.8rem;
+        color: #94a3b8;
+        background: rgba(255,255,255,0.04);
+        border-radius: 6px;
+        padding: 0.5rem 0.75rem;
+        margin-top: 0.75rem;
+        border: 1px solid rgba(255,255,255,0.06);
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 3rem;
+        color: #64748b;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-3 align-items-center">
+    <div class="col d-flex align-items-center gap-3">
+        <button onclick="history.back()"
+            class="btn d-flex align-items-center justify-content-center flex-shrink-0"
+            title="Go Back"
+            style="width:38px;height:38px;border-radius:50%;background:rgba(99,102,241,0.12);
+                   border:1px solid rgba(99,102,241,0.3);color:#a5b4fc;transition:all 0.2s ease;"
+            onmouseover="this.style.background='rgba(99,102,241,0.28)';this.style.boxShadow='0 4px 14px rgba(99,102,241,0.3)';"
+            onmouseout="this.style.background='rgba(99,102,241,0.12)';this.style.boxShadow='none';">
+            <i class="bi bi-arrow-left"></i>
+        </button>
+        <div>
+            <h4 class="text-white fw-bold mb-0">
+                <i class="bi bi-stars me-2 text-indigo"></i>Generated Results
+            </h4>
+            <p class="text-secondary small mt-1 mb-0">{{ file_obj.title }}</p>
+        </div>
+    </div>
+    <div class="col-auto d-flex gap-2 flex-wrap text-end align-items-center">
+        <a href="{% url 'chat_with_pdf' file_obj.id %}" class="btn btn-premium btn-sm py-2 px-3" style="background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);">
+            <i class="bi bi-chat-dots-fill me-1"></i> Chat with AI
+        </a>
+        <a href="{% url 'summary' file_obj.id %}" class="btn btn-premium-outline btn-sm py-2 px-3" style="border-color: rgba(168, 85, 247, 0.4); color: #c084fc;">
+            <i class="bi bi-file-earmark-slides me-1"></i> Summary Sheet
+        </a>
+        {% if mcqs %}
+        <a href="{% url 'quiz' file_id=file_obj.id %}" class="btn btn-premium btn-sm py-2 px-3">
+            <i class="bi bi-play-circle-fill me-1"></i> Take MCQ Quiz
+        </a>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Hero Summary -->
+<div class="review-hero mb-4">
+    <div class="row text-center g-3">
+        <div class="col-6 col-md-3">
+            <div class="fs-2 fw-bold text-indigo">{{ mcqs.count }}</div>
+            <div class="text-secondary small">MCQs Generated</div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="fs-2 fw-bold" style="color:#a855f7;">{{ normal_qs.count }}</div>
+            <div class="text-secondary small">Questions Generated</div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="fs-2 fw-bold text-success">{{ file_obj.file_type }}</div>
+            <div class="text-secondary small">Source Type</div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="fs-2 fw-bold text-warning"><i class="bi bi-check-circle-fill fs-3"></i></div>
+            <div class="text-secondary small">AI Generated</div>
+        </div>
+    </div>
+</div>
+
+<!-- Action Bar -->
+<div class="action-bar mb-4 d-flex flex-wrap align-items-center justify-content-between gap-3">
+    <!-- Section Tabs -->
+    <div class="d-flex gap-2 flex-wrap">
+        {% if mcqs %}
+        <button class="tab-section-btn active" id="btnShowMCQ" onclick="showSection('mcq')">
+            <i class="bi bi-list-check me-1"></i> MCQs ({{ mcqs.count }})
+        </button>
+        {% endif %}
+        <button class="tab-section-btn {% if not mcqs %}active{% endif %}" id="btnShowQ" onclick="showSection('question')">
+            <i class="bi bi-patch-question me-1"></i> Questions ({{ normal_qs.count|default:0 }})
+        </button>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="d-flex gap-2 flex-wrap">
+        <button class="btn-copy" onclick="copyAll()" id="copyAllBtn">
+            <i class="bi bi-clipboard2"></i> Copy All
+        </button>
+
+        <button class="btn-download" onclick="downloadPdf()">
+            <i class="bi bi-file-earmark-pdf"></i> PDF
+        </button>
+        <a class="btn-download text-decoration-none" href="{% url 'download_content' file_obj.id 'doc' %}">
+            <i class="bi bi-file-earmark-word"></i> Word
+        </a>
+    </div>
+</div>
+
+<!-- MCQ Section -->
+{% if mcqs %}
+<div id="section-mcq">
+    <div class="d-flex align-items-center justify-content-between mb-3">
+        <div class="section-title">
+            <i class="bi bi-list-check text-indigo"></i> Multiple Choice Questions
+        </div>
+    </div>
+
+    {% for q in mcqs %}
+    <div class="q-card" id="mcq-{{ forloop.counter }}">
+        <div class="d-flex align-items-start justify-content-between gap-3 mb-3">
+            <div class="d-flex align-items-start gap-3">
+                <div class="q-number">{{ forloop.counter }}</div>
+                <div class="fw-semibold text-white" style="line-height:1.5;">{{ q.question_text }}</div>
+            </div>
+        </div>
+        <div class="ps-5 d-flex flex-column gap-2">
+            <div class="d-flex align-items-center {% if file_obj.include_answers and q.correct_answer == 'A' %}correct-option{% endif %}">
+                <span class="option-badge">A</span>
+                <span class="text-secondary {% if file_obj.include_answers and q.correct_answer == 'A' %}text-success{% endif %}">{{ q.option_a }}</span>
+                {% if file_obj.include_answers and q.correct_answer == 'A' %}<i class="bi bi-check-circle-fill text-success ms-auto fs-6"></i>{% endif %}
+            </div>
+            <div class="d-flex align-items-center {% if file_obj.include_answers and q.correct_answer == 'B' %}correct-option{% endif %}">
+                <span class="option-badge">B</span>
+                <span class="text-secondary {% if file_obj.include_answers and q.correct_answer == 'B' %}text-success{% endif %}">{{ q.option_b }}</span>
+                {% if file_obj.include_answers and q.correct_answer == 'B' %}<i class="bi bi-check-circle-fill text-success ms-auto fs-6"></i>{% endif %}
+            </div>
+            <div class="d-flex align-items-center {% if file_obj.include_answers and q.correct_answer == 'C' %}correct-option{% endif %}">
+                <span class="option-badge">C</span>
+                <span class="text-secondary {% if file_obj.include_answers and q.correct_answer == 'C' %}text-success{% endif %}">{{ q.option_c }}</span>
+                {% if file_obj.include_answers and q.correct_answer == 'C' %}<i class="bi bi-check-circle-fill text-success ms-auto fs-6"></i>{% endif %}
+            </div>
+            <div class="d-flex align-items-center {% if file_obj.include_answers and q.correct_answer == 'D' %}correct-option{% endif %}">
+                <span class="option-badge">D</span>
+                <span class="text-secondary {% if file_obj.include_answers and q.correct_answer == 'D' %}text-success{% endif %}">{{ q.option_d }}</span>
+                {% if file_obj.include_answers and q.correct_answer == 'D' %}<i class="bi bi-check-circle-fill text-success ms-auto fs-6"></i>{% endif %}
+            </div>
+        </div>
+        {% if file_obj.include_answers and q.explanation %}
+        <div class="explanation-pill mt-3 ms-5">
+            <i class="bi bi-lightbulb text-warning me-1"></i> {{ q.explanation }}
+        </div>
+        {% endif %}
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<!-- Normal Questions Section (Always Available) -->
+<div id="section-question" {% if mcqs %}style="display:none;"{% endif %}>
+    <div class="d-flex align-items-center justify-content-between mb-3">
+        <div class="section-title">
+            <i class="bi bi-patch-question" style="color:#a855f7;"></i> Subjective Questions & Answers
+        </div>
+    </div>
+
+    {% for q in normal_qs %}
+    <div class="q-card" id="nq-{{ forloop.counter }}">
+        <div class="d-flex align-items-start gap-3">
+            <div class="q-number" style="background: linear-gradient(135deg, #7c3aed, #a855f7);">{{ forloop.counter }}</div>
+            <div class="w-100">
+                <div class="fw-semibold text-white mb-2" style="line-height:1.5;">{{ q.question_text }}</div>
+                {% if file_obj.include_answers and q.answer %}
+                <div class="answer-box">
+                    <span class="text-xs fw-bold text-indigo d-block mb-1" style="font-size:0.75rem; letter-spacing:0.05em;">ANSWER</span>
+                    {{ q.answer }}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+
+    <!-- Add Custom Question Form -->
+    <div class="q-card mt-4" style="border: 1px dashed rgba(168,85,247,0.4); background: rgba(168,85,247,0.03);">
+        <h5 class="text-white mb-3"><i class="bi bi-plus-circle text-purple" style="color:#a855f7;"></i> Add a Custom Question</h5>
+        <form action="{% url 'add_custom_question' file_obj.id %}" method="POST">
+            {% csrf_token %}
+            <div class="input-group">
+                <input type="text" name="question_text" class="form-control bg-dark text-white border-secondary" placeholder="Type your specific question here..." required>
+                <button type="submit" class="btn btn-premium" style="background: linear-gradient(135deg, #7c3aed, #a855f7); border: none;">
+                    Ask QGenie
+                </button>
+            </div>
+            <div class="form-text text-secondary mt-2 small">QGenie AI will read your document and automatically generate the correct answer for your question!</div>
+        </form>
+    </div>
+</div>
+
+{% if not mcqs and not normal_qs %}
+<div class="empty-state">
+    <i class="bi bi-inbox fs-1 mb-3 d-block"></i>
+    <h5 class="text-white">No content generated</h5>
+    <p class="small">Please go back and try again.</p>
+    <a href="{% url 'upload' %}" class="btn btn-premium mt-2">Try Again</a>
+</div>
+{% endif %}
+
+<!-- Hidden content for copy/download -->
+<div id="hidden-mcq-text" style="display:none;">{% for q in mcqs %}Q{{ forloop.counter }}: {{ q.question_text }}
+A) {{ q.option_a }}
+B) {{ q.option_b }}
+C) {{ q.option_c }}
+D) {{ q.option_d }}{% if file_obj.include_answers %}
+Correct Answer: {{ q.correct_answer }}{% if q.explanation %}
+Explanation: {{ q.explanation }}{% endif %}{% endif %}
+
+{% endfor %}</div>
+
+<div id="hidden-nq-text" style="display:none;">{% for q in normal_qs %}Q{{ forloop.counter }}: {{ q.question_text }}{% if file_obj.include_answers and q.answer %}
+Answer: {{ q.answer }}{% endif %}
+
+{% endfor %}</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+
+
+    function showToast(message) {
+        let toast = document.getElementById("qgenie-toast");
+        if (!toast) {
+            toast = document.createElement("div");
+            toast.id = "qgenie-toast";
+            toast.style.position = "fixed";
+            toast.style.bottom = "20px";
+            toast.style.right = "20px";
+            toast.style.zIndex = "9999";
+            toast.style.background = "linear-gradient(135deg, #6366f1, #a855f7)";
+            toast.style.color = "white";
+            toast.style.padding = "12px 24px";
+            toast.style.borderRadius = "30px";
+            toast.style.boxShadow = "0 8px 30px rgba(99, 102, 241, 0.3)";
+            toast.style.fontWeight = "600";
+            toast.style.transition = "all 0.3s ease";
+            toast.style.opacity = "0";
+            document.body.appendChild(toast);
+        }
+        toast.textContent = message;
+        toast.style.opacity = "1";
+        toast.style.transform = "translateY(-10px)";
+        
+        setTimeout(() => {
+            toast.style.opacity = "0";
+            toast.style.transform = "translateY(0)";
+        }, 2500);
+    }
+
+    // Section Tab Toggle
+    function showSection(type) {
+        const mcqEl = document.getElementById('section-mcq');
+        const qEl = document.getElementById('section-question');
+        const btnMCQ = document.getElementById('btnShowMCQ');
+        const btnQ = document.getElementById('btnShowQ');
+
+        if (type === 'mcq') {
+            if (mcqEl) { mcqEl.style.display = 'block'; }
+            if (qEl) { qEl.style.display = 'none'; }
+            if (btnMCQ) btnMCQ.classList.add('active');
+            if (btnQ) btnQ.classList.remove('active');
+        } else {
+            if (mcqEl) { mcqEl.style.display = 'none'; }
+            if (qEl) { qEl.style.display = 'block'; }
+            if (btnMCQ) btnMCQ.classList.remove('active');
+            if (btnQ) btnQ.classList.add('active');
+        }
+    }
+
+    // Copy a section
+    function copySection(type, btn) {
+        let text = '';
+        if (type === 'mcq') {
+            text = document.getElementById('hidden-mcq-text')?.innerText || '';
+        } else {
+            text = document.getElementById('hidden-nq-text')?.innerText || '';
+        }
+        copyToClipboard(text, btn);
+    }
+
+    // Copy All
+    function copyAll() {
+        const mcq = document.getElementById('hidden-mcq-text')?.innerText || '';
+        const nq = document.getElementById('hidden-nq-text')?.innerText || '';
+        let combined = '';
+        if (mcq.trim()) combined += '=== MULTIPLE CHOICE QUESTIONS ===\n\n' + mcq;
+        if (nq.trim()) combined += '=== SUBJECTIVE QUESTIONS & ANSWERS ===\n\n' + nq;
+        copyToClipboard(combined, document.getElementById('copyAllBtn'));
+    }
+
+    function copyToClipboard(text, btn) {
+        navigator.clipboard.writeText(text.trim()).then(() => {
+            if (btn) {
+                const originalHtml = btn.innerHTML;
+                btn.classList.add('copied');
+                btn.innerHTML = '<i class="bi bi-check-circle-fill"></i> Copied!';
+                setTimeout(() => {
+                    btn.classList.remove('copied');
+                    btn.innerHTML = originalHtml;
+                }, 2500);
+            }
+        }).catch(() => {
+            // Fallback
+            const ta = document.createElement('textarea');
+            ta.value = text.trim();
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand('copy');
+            document.body.removeChild(ta);
+        });
+    }
+
+
+
+    // Download PDF (via print dialog)
+    function downloadPdf() {
+        const printWindow = window.open('', '_blank');
+        const mcq = document.getElementById('hidden-mcq-text')?.innerText || '';
+        const nq = document.getElementById('hidden-nq-text')?.innerText || '';
+        
+        let html = `
+        <!DOCTYPE html><html><head>
+        <title>QGenie.AI Generated Content</title>
+        <style>
+            body { font-family: Arial, sans-serif; max-width: 800px; margin: 40px auto; color: #1e293b; line-height: 1.7; }
+            h1 { color: #6366f1; border-bottom: 2px solid #6366f1; padding-bottom: 10px; }
+            h2 { color: #7c3aed; margin-top: 2rem; }
+            pre { white-space: pre-wrap; font-family: Arial, sans-serif; font-size: 14px; }
+            .footer { color: #94a3b8; font-size: 12px; margin-top: 3rem; border-top: 1px solid #e2e8f0; padding-top: 1rem; }
+        </style>
+        </head><body>
+        <h1>QGenie.AI &mdash; Generated Content</h1>
+        <p style="color:#94a3b8;">Source: <strong>{{ file_obj.title }}</strong></p>`;
+        
+        if (mcq.trim()) html += `<h2>Multiple Choice Questions (MCQs)</h2><pre>${mcq.trim()}</pre>`;
+        if (nq.trim()) html += `<h2>Subjective Questions &amp; Answers</h2><pre>${nq.trim()}</pre>`;
+        
+        html += `<div class="footer">Generated by QGenie.AI &copy; 2026. All rights reserved.</div></body></html>`;
+
+        printWindow.document.write(html);
+        printWindow.document.close();
+        printWindow.focus();
+        setTimeout(() => printWindow.print(), 500);
+    }
+</script>
+{% endblock %}

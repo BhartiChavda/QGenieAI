@@ -1,0 +1,339 @@
+:root {
+    --bg-color: #08090f;
+    --bg-card: rgba(17, 20, 38, 0.7);
+    --bg-glass: rgba(12, 14, 28, 0.85);
+    --border-glass: rgba(255, 255, 255, 0.07);
+    --accent-primary: #00d2ff; /* Cyan */
+    --accent-secondary: #0072ff; /* Deep Blue */
+    --accent-glow: rgba(0, 210, 255, 0.12);
+    --text-primary: #f1f5f9;
+    --text-secondary: #94a3b8;
+    --text-muted: #475569;
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-primary);
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow-x: hidden;
+    background-image: 
+        radial-gradient(at 0% 100%, rgba(0, 210, 255, 0.08) 0px, transparent 40%),
+        radial-gradient(at 100% 0%, rgba(0, 114, 255, 0.08) 0px, transparent 40%);
+    background-attachment: fixed;
+}
+
+h1, h2, h3, h4, h5, h6, .display-font {
+    font-family: 'Outfit', sans-serif;
+    font-weight: 600;
+}
+
+/* Glassmorphic Navbar for Admin */
+.navbar-admin {
+    background: var(--bg-glass);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-bottom: 1px solid rgba(0, 210, 255, 0.15);
+    padding: 0.9rem 0;
+    z-index: 1000;
+}
+
+.navbar-brand-admin {
+    font-size: 1.5rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.nav-link-admin {
+    color: var(--text-secondary);
+    font-weight: 500;
+    font-size: 0.9rem;
+    padding: 0.5rem 1rem !important;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.nav-link-admin:hover, .nav-link-admin.active {
+    color: var(--text-primary);
+    background: rgba(0, 210, 255, 0.08);
+}
+
+.nav-link-admin.active {
+    border-left: 2px solid var(--accent-primary);
+}
+
+/* Glass Cards for Admin Dashboard */
+.admin-card {
+    background: var(--bg-card);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--border-glass);
+    border-radius: 14px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.admin-card:hover {
+    border-color: rgba(0, 210, 255, 0.25);
+    box-shadow: 0 12px 30px rgba(0, 210, 255, 0.08);
+    transform: translateY(-2px);
+}
+
+/* Buttons */
+.btn-admin {
+    background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
+    color: white;
+    border: none;
+    padding: 0.55rem 1.4rem;
+    border-radius: 6px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px var(--accent-glow);
+}
+
+.btn-admin:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(0, 210, 255, 0.3);
+    color: white;
+}
+
+.btn-admin-outline {
+    background: transparent;
+    color: var(--text-primary);
+    border: 1px solid var(--border-glass);
+    padding: 0.55rem 1.4rem;
+    border-radius: 6px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.btn-admin-outline:hover {
+    background: rgba(255, 255, 255, 0.04);
+    border-color: var(--accent-primary);
+    color: var(--text-primary);
+}
+
+.btn-admin-danger {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.25);
+    padding: 0.4rem 1rem;
+    border-radius: 6px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.btn-admin-danger:hover {
+    background: #ef4444;
+    color: white;
+    border-color: #ef4444;
+}
+
+.btn-admin-success {
+    background: rgba(16, 185, 129, 0.1);
+    color: #10b981;
+    border: 1px solid rgba(16, 185, 129, 0.25);
+    padding: 0.4rem 1rem;
+    border-radius: 6px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.btn-admin-success:hover {
+    background: #10b981;
+    color: white;
+    border-color: #10b981;
+}
+
+/* Custom Alert Messages */
+.alert-admin {
+    background: var(--bg-card);
+    border-left: 4px solid var(--accent-primary);
+    color: var(--text-primary);
+    border-top: 1px solid var(--border-glass);
+    border-bottom: 1px solid var(--border-glass);
+    border-right: 1px solid var(--border-glass);
+    border-radius: 8px;
+    backdrop-filter: blur(8px);
+}
+
+.alert-admin.alert-error {
+    border-left: 4px solid #ef4444 !important;
+}
+
+.alert-admin.alert-success {
+    border-left: 4px solid #10b981 !important;
+}
+
+.alert-admin.alert-info, .alert-admin.alert-warning {
+    border-left: 4px solid var(--accent-primary) !important;
+}
+
+/* Table styles */
+.admin-table {
+    border-color: var(--border-glass) !important;
+}
+
+.admin-table tbody tr {
+    transition: all 0.2s ease;
+}
+
+.admin-table tbody tr:hover {
+    background-color: rgba(255, 255, 255, 0.02) !important;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--bg-color);
+}
+
+::-webkit-scrollbar-thumb {
+    background: #191b2c;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--accent-primary);
+}
+
+/* Footer styling */
+footer {
+    margin-top: auto;
+    border-top: 1px solid var(--border-glass);
+    background: rgba(8, 9, 15, 0.6);
+    backdrop-filter: blur(10px);
+    padding: 1.5rem 0;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+}
+
+/* Global Splash Screen Styles */
+.global-splash {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: var(--bg-color, #0b0c15);
+    background-image: 
+        radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.12) 0px, transparent 50%),
+        radial-gradient(at 100% 100%, rgba(168, 85, 247, 0.12) 0px, transparent 50%);
+    z-index: 99999;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: opacity 0.5s ease-out, visibility 0.5s;
+    backdrop-filter: blur(10px);
+}
+
+.global-splash.fade-out {
+    opacity: 0;
+    visibility: hidden;
+}
+
+.splash-logo {
+    width: 90px;
+    height: 90px;
+    border-radius: 18px;
+    box-shadow: 0 10px 30px rgba(99, 102, 241, 0.3);
+    animation: float 3s ease-in-out infinite;
+}
+
+.splash-title {
+    background: linear-gradient(135deg, var(--accent-primary, #6366f1), var(--accent-secondary, #a855f7));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: 1px;
+    font-family: 'Outfit', sans-serif;
+}
+
+@keyframes float {
+    0% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+    100% { transform: translateY(0px); }
+}
+
+.splash-loader-ring {
+    width: 46px;
+    height: 46px;
+    border: 3px solid rgba(255, 255, 255, 0.05);
+    border-top: 3px solid var(--accent-primary, #6366f1);
+    border-bottom: 3px solid var(--accent-secondary, #a855f7);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto;
+}
+
+/* ==========================================================================
+   Responsive Utilities & Fluid Typography for Mobile, Tablet, and Laptops (Admin)
+   ========================================================================== */
+
+@media (max-width: 575.98px) {
+    h1, .display-6 {
+        font-size: 1.6rem !important;
+    }
+    h2 {
+        font-size: 1.35rem !important;
+    }
+    .admin-card {
+        padding: 1.25rem !important;
+        border-radius: 10px;
+    }
+    .btn-admin, .btn-admin-outline, .btn-admin-danger, .btn-admin-success {
+        padding: 0.45rem 1rem;
+        font-size: 0.8rem;
+        width: 100%;
+        text-align: center;
+    }
+    .d-flex.justify-content-end.gap-2, .d-flex.gap-2 {
+        flex-direction: column;
+        width: 100%;
+        align-items: stretch !important;
+    }
+    .d-flex.justify-content-end.gap-2 a, .d-flex.gap-2 a {
+        width: 100%;
+        margin-bottom: 0.25rem;
+    }
+    .breadcrumb {
+        font-size: 0.8rem;
+    }
+}
+
+@media (min-width: 576px) and (max-width: 767.98px) {
+    h1, .display-6 {
+        font-size: 2rem !important;
+    }
+    .admin-card {
+        padding: 1.5rem !important;
+    }
+}
+
+@media (max-width: 991.98px) {
+    .navbar-nav {
+        align-items: stretch !important;
+    }
+    .navbar-nav .nav-item ms-lg-3 {
+        margin-left: 0 !important;
+        margin-top: 1rem;
+        flex-direction: column;
+        width: 100%;
+    }
+    .navbar-nav .nav-item ms-lg-3 a {
+        width: 100%;
+        justify-content: center;
+        text-align: center;
+        margin-bottom: 0.5rem;
+    }
+}
+

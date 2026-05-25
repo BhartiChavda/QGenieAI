@@ -1,0 +1,495 @@
+{% extends 'user_panel/base.html' %}
+{% load static %}
+
+{% block title %}My Profile & Settings - QGenie.AI{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Premium Theme Card Styling */
+    .theme-card {
+        border: 2px solid rgba(255, 255, 255, 0.05);
+        background: rgba(255, 255, 255, 0.02);
+        border-radius: 12px;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .theme-card:hover {
+        transform: translateY(-4px);
+        border-color: rgba(255, 255, 255, 0.15);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    .theme-card.active {
+        border-color: var(--accent-primary) !important;
+        background: rgba(99, 102, 241, 0.05);
+        box-shadow: 0 0 20px rgba(99, 102, 241, 0.15);
+    }
+
+    .theme-dot {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        display: inline-block;
+        border: 2px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .theme-indigo .theme-dot { background: linear-gradient(135deg, #6366f1, #a855f7); }
+    .theme-emerald .theme-dot { background: linear-gradient(135deg, #10b981, #059669); }
+    .theme-rose .theme-dot { background: linear-gradient(135deg, #f43f5e, #e11d48); }
+    .theme-amber .theme-dot { background: linear-gradient(135deg, #f59e0b, #d97706); }
+    .theme-dark .theme-dot { background: linear-gradient(135deg, #3b82f6, #1d4ed8); }
+
+    /* Profile Avatar section styling */
+    .avatar-preview-container {
+        position: relative;
+        width: 140px;
+        height: 140px;
+        margin: 0 auto;
+    }
+
+    .avatar-large {
+        width: 140px;
+        height: 140px;
+        object-fit: cover;
+        border-radius: 50%;
+        border: 4px solid var(--border-glass);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        background: rgba(255, 255, 255, 0.05);
+        transition: all 0.3s ease;
+    }
+
+    .avatar-large:hover {
+        border-color: var(--accent-primary);
+    }
+
+    .delete-avatar-btn {
+        position: absolute;
+        bottom: 0;
+        right: 0;
+        background: #ef4444;
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 36px;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 10px rgba(239, 68, 68, 0.4);
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .delete-avatar-btn:hover {
+        background: #dc2626;
+        transform: scale(1.1);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row g-4 justify-content-center">
+    <div class="col-lg-10">
+        <!-- Back Dashboard Button & Title -->
+        <div class="d-flex align-items-center gap-3 mb-4">
+            <a href="{% url 'dashboard' %}"
+                class="btn d-flex align-items-center justify-content-center flex-shrink-0"
+                title="Back to Dashboard"
+                style="width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,0.06);
+                       border:1px solid rgba(255,255,255,0.1);color:#94a3b8;transition:all 0.2s ease;">
+                <i class="bi bi-arrow-left"></i>
+            </a>
+            <div>
+                <h3 class="text-white fw-bold mb-0">Profile & Settings</h3>
+                <p class="text-secondary small mb-0">Manage your avatar, account information, password and theme preference</p>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <!-- Left Column: Avatar & Quick Info -->
+            <div class="col-md-4">
+                <div class="card glass-card p-4 text-center h-100">
+                    <div class="mb-4">
+                        <div class="avatar-preview-container">
+                            {% if profile.avatar %}
+                                <img src="{{ profile.avatar.url }}" alt="Profile Photo" class="avatar-large" style="cursor: pointer;" onclick="openLightbox('{{ profile.avatar.url }}')" title="Click to view full image">
+                                <form method="post" action="{% url 'profile' %}" id="deleteAvatarForm">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="delete_avatar">
+                                    <button type="submit" class="delete-avatar-btn" title="Delete Photo">
+                                        <i class="bi bi-trash-fill fs-6"></i>
+                                    </button>
+                                </form>
+                            {% else %}
+                                <div class="avatar-large d-flex align-items-center justify-content-center display-1 fw-bold text-white mb-0" 
+                                     style="background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));">
+                                    {{ user.username|slice:":2"|upper }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <h4 class="text-white fw-bold mb-1">{{ user.first_name }} {{ user.last_name }}</h4>
+                    <p class="text-secondary small mb-3">@{{ user.username }}</p>
+                    <span class="badge bg-dark border border-secondary px-3 py-2 text-secondary mb-4">{{ user.email }}</span>
+
+                    <div class="border-top border-secondary pt-3 text-start small">
+                        <div class="d-flex justify-content-between text-secondary mb-2">
+                            <span>Account Status:</span>
+                            <span class="text-success fw-bold"><i class="bi bi-patch-check-fill me-1"></i>Active</span>
+                        </div>
+                        <div class="d-flex justify-content-between text-secondary mb-2">
+                            <span>Role:</span>
+                            <span>{% if user.is_staff %}Administrator{% else %}Standard User{% endif %}</span>
+                        </div>
+                        <div class="d-flex justify-content-between text-secondary">
+                            <span>Date Joined:</span>
+                            <span>{{ user.date_joined|date:"M d, Y" }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Settings Panel -->
+            <div class="col-md-8">
+                <!-- Tab Controls -->
+                <div class="card glass-card p-2 mb-4">
+                    <ul class="nav nav-pills nav-fill gap-2" id="settingsTab" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link nav-link-custom active fw-semibold" id="details-tab" data-bs-toggle="tab" data-bs-target="#details" type="button" role="tab" aria-controls="details" aria-selected="true">
+                                <i class="bi bi-person-gear me-1"></i> Edit Details
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link nav-link-custom fw-semibold" id="theme-tab" data-bs-toggle="tab" data-bs-target="#theme" type="button" role="tab" aria-controls="theme" aria-selected="false">
+                                <i class="bi bi-palette me-1"></i> App Theme
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link nav-link-custom fw-semibold" id="password-tab" data-bs-toggle="tab" data-bs-target="#password" type="button" role="tab" aria-controls="password" aria-selected="false">
+                                <i class="bi bi-shield-lock me-1"></i> Password Change
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link nav-link-custom fw-semibold" id="email-tab" data-bs-toggle="tab" data-bs-target="#email-change" type="button" role="tab" aria-controls="email-change" aria-selected="false">
+                                <i class="bi bi-envelope me-1"></i> Email Change
+                            </button>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Tab Contents -->
+                <div class="tab-content" id="settingsTabContent">
+                    <!-- Tab 1: Edit Details -->
+                    <div class="tab-pane fade show active" id="details" role="tabpanel" aria-labelledby="details-tab">
+                        <div class="card glass-card p-4 p-md-5">
+                            <h4 class="text-white fw-bold mb-4">Account Information</h4>
+                            <form method="post" action="{% url 'profile' %}" enctype="multipart/form-data">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="update_details">
+
+                                <div class="row g-3">
+                                    <div class="col-sm-6">
+                                        <label for="id_first_name" class="form-label text-secondary fw-semibold">First Name</label>
+                                        {{ user_form.first_name }}
+                                    </div>
+                                    <div class="col-sm-6">
+                                        <label for="id_last_name" class="form-label text-secondary fw-semibold">Last Name</label>
+                                        {{ user_form.last_name }}
+                                    </div>
+                                    <div class="col-12">
+                                        <label class="form-label text-secondary fw-semibold">Email Address</label>
+                                        <input type="email" class="form-control bg-dark-input text-secondary border-secondary" value="{{ user.email }}" readonly>
+                                        <p class="text-muted small mt-1"><i class="bi bi-info-circle me-1"></i> Go to the Email Change tab to update your email.</p>
+                                    </div>
+                                    <div class="col-12">
+                                        <label for="id_avatar" class="form-label text-secondary fw-semibold">Upload New Profile Photo</label>
+                                        {{ profile_form.avatar }}
+                                        <p class="text-muted small mt-1"><i class="bi bi-file-earmark-image me-1"></i> Select a custom image file (JPG, PNG).</p>
+                                    </div>
+                                </div>
+
+                                <button type="submit" class="btn btn-premium px-5 py-2.5 mt-4">
+                                    <i class="bi bi-check-circle me-1"></i> Save Changes
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Tab 2: Theme settings -->
+                    <div class="tab-pane fade" id="theme" role="tabpanel" aria-labelledby="theme-tab">
+                        <div class="card glass-card p-4 p-md-5">
+                            <h4 class="text-white fw-bold mb-1">Visual Theme Settings</h4>
+                            <p class="text-secondary small mb-4">Choose a color layout and brightness mode that fits your environment.</p>
+                            
+                            <form method="post" action="{% url 'profile' %}">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="update_theme">
+                                <input type="hidden" name="theme_mode" id="selectedThemeModeInput" value="{{ profile.theme_mode }}">
+
+                                <!-- A. Brightness Mode Selection -->
+                                <h5 class="text-white fw-bold mb-3 mt-1"><i class="bi bi-brightness-high me-2 text-indigo"></i>Brightness Mode</h5>
+                                <div class="row g-3 mb-4 border-bottom border-secondary pb-4">
+                                    <!-- Light Mode Card -->
+                                    <div class="col-md-4">
+                                        <div class="theme-card p-3 d-flex align-items-center justify-content-between {% if profile.theme_mode == 'light' %}active{% endif %}" id="modeCard_light" onclick="selectThemeMode('light')" style="background: rgba(255,255,255,0.03);">
+                                            <div class="d-flex align-items-center gap-3">
+                                                <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; background: #e2e8f0; color: #475569;">
+                                                    <i class="bi bi-sun-fill"></i>
+                                                </div>
+                                                <span class="text-white fw-semibold">Light Mode</span>
+                                            </div>
+                                            <i class="bi bi-check-circle-fill text-indigo check-icon-mode" id="modeCheck_light" {% if profile.theme_mode == 'light' %}style="opacity: 1;"{% else %}style="opacity: 0;"{% endif %}></i>
+                                        </div>
+                                    </div>
+
+                                    <!-- Dark Mode Card -->
+                                    <div class="col-md-4">
+                                        <div class="theme-card p-3 d-flex align-items-center justify-content-between {% if profile.theme_mode == 'dark' %}active{% endif %}" id="modeCard_dark" onclick="selectThemeMode('dark')" style="background: rgba(255,255,255,0.03);">
+                                            <div class="d-flex align-items-center gap-3">
+                                                <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; background: #1e1b4b; color: #818cf8;">
+                                                    <i class="bi bi-moon-fill"></i>
+                                                </div>
+                                                <span class="text-white fw-semibold">Dark Mode</span>
+                                            </div>
+                                            <i class="bi bi-check-circle-fill text-indigo check-icon-mode" id="modeCheck_dark" {% if profile.theme_mode == 'dark' %}style="opacity: 1;"{% else %}style="opacity: 0;"{% endif %}></i>
+                                        </div>
+                                    </div>
+
+                                    <!-- Night Mode Card -->
+                                    <div class="col-md-4">
+                                        <div class="theme-card p-3 d-flex align-items-center justify-content-between {% if profile.theme_mode == 'night' %}active{% endif %}" id="modeCard_night" onclick="selectThemeMode('night')" style="background: rgba(255,255,255,0.03);">
+                                            <div class="d-flex align-items-center gap-3">
+                                                <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; background: #000000; color: #ffffff; border: 1px solid rgba(255,255,255,0.2);">
+                                                    <i class="bi bi-moon-stars-fill"></i>
+                                                </div>
+                                                <span class="text-white fw-semibold">Night Mode</span>
+                                            </div>
+                                            <i class="bi bi-check-circle-fill text-indigo check-icon-mode" id="modeCheck_night" {% if profile.theme_mode == 'night' %}style="opacity: 1;"{% else %}style="opacity: 0;"{% endif %}></i>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- B. Accent Color Customization -->
+                                <h5 class="text-white fw-bold mb-3"><i class="bi bi-palette me-2 text-indigo"></i>Color Accents</h5>
+                                <div class="row g-3">
+                                    <!-- Indigo Theme -->
+                                    <div class="col-sm-6 col-md-4">
+                                        <div class="theme-card theme-indigo p-3 d-flex align-items-center justify-content-between {% if profile.theme == 'indigo' %}active{% endif %}" onclick="selectTheme('indigo')">
+                                            <div class="d-flex align-items-center gap-3">
+                                                <span class="theme-dot"></span>
+                                                <span class="text-white fw-semibold">Indigo Glow</span>
+                                            </div>
+                                            <input type="radio" class="form-check-input" name="theme" value="indigo" id="theme_indigo" {% if profile.theme == 'indigo' %}checked{% endif %} style="display:none;">
+                                            <i class="bi bi-check-circle-fill text-indigo fs-5 check-icon" {% if profile.theme == 'indigo' %}style="opacity: 1;"{% else %}style="opacity: 0;"{% endif %}></i>
+                                        </div>
+                                    </div>
+
+                                    <!-- Emerald Theme -->
+                                    <div class="col-sm-6 col-md-4">
+                                        <div class="theme-card theme-emerald p-3 d-flex align-items-center justify-content-between {% if profile.theme == 'emerald' %}active{% endif %}" onclick="selectTheme('emerald')">
+                                            <div class="d-flex align-items-center gap-3">
+                                                <span class="theme-dot"></span>
+                                                <span class="text-white fw-semibold">Emerald Forest</span>
+                                            </div>
+                                            <input type="radio" class="form-check-input" name="theme" value="emerald" id="theme_emerald" {% if profile.theme == 'emerald' %}checked{% endif %} style="display:none;">
+                                            <i class="bi bi-check-circle-fill text-success fs-5 check-icon" {% if profile.theme == 'emerald' %}style="opacity: 1;"{% else %}style="opacity: 0;"{% endif %}></i>
+                                        </div>
+                                    </div>
+
+                                    <!-- Rose Theme -->
+                                    <div class="col-sm-6 col-md-4">
+                                        <div class="theme-card theme-rose p-3 d-flex align-items-center justify-content-between {% if profile.theme == 'rose' %}active{% endif %}" onclick="selectTheme('rose')">
+                                            <div class="d-flex align-items-center gap-3">
+                                                <span class="theme-dot"></span>
+                                                <span class="text-white fw-semibold">Rose Quartz</span>
+                                            </div>
+                                            <input type="radio" class="form-check-input" name="theme" value="rose" id="theme_rose" {% if profile.theme == 'rose' %}checked{% endif %} style="display:none;">
+                                            <i class="bi bi-check-circle-fill text-danger fs-5 check-icon" {% if profile.theme == 'rose' %}style="opacity: 1;"{% else %}style="opacity: 0;"{% endif %}></i>
+                                        </div>
+                                    </div>
+
+                                    <!-- Amber Theme -->
+                                    <div class="col-sm-6 col-md-4">
+                                        <div class="theme-card theme-amber p-3 d-flex align-items-center justify-content-between {% if profile.theme == 'amber' %}active{% endif %}" onclick="selectTheme('amber')">
+                                            <div class="d-flex align-items-center gap-3">
+                                                <span class="theme-dot"></span>
+                                                <span class="text-white fw-semibold">Amber Gold</span>
+                                            </div>
+                                            <input type="radio" class="form-check-input" name="theme" value="amber" id="theme_amber" {% if profile.theme == 'amber' %}checked{% endif %} style="display:none;">
+                                            <i class="bi bi-check-circle-fill text-warning fs-5 check-icon" {% if profile.theme == 'amber' %}style="opacity: 1;"{% else %}style="opacity: 0;"{% endif %}></i>
+                                        </div>
+                                    </div>
+
+                                    <!-- Midnight Dark Theme -->
+                                    <div class="col-sm-6 col-md-4">
+                                        <div class="theme-card theme-dark p-3 d-flex align-items-center justify-content-between {% if profile.theme == 'dark' %}active{% endif %}" onclick="selectTheme('dark')">
+                                            <div class="d-flex align-items-center gap-3">
+                                                <span class="theme-dot"></span>
+                                                <span class="text-white fw-semibold">Midnight Dark</span>
+                                            </div>
+                                            <input type="radio" class="form-check-input" name="theme" value="dark" id="theme_dark" {% if profile.theme == 'dark' %}checked{% endif %} style="display:none;">
+                                            <i class="bi bi-check-circle-fill text-primary fs-5 check-icon" {% if profile.theme == 'dark' %}style="opacity: 1;"{% else %}style="opacity: 0;"{% endif %}></i>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <button type="submit" class="btn btn-premium px-5 py-2.5 mt-5">
+                                    <i class="bi bi-check-circle me-1"></i> Apply Theme Preferences
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Tab 3: Password Update -->
+                    <div class="tab-pane fade" id="password" role="tabpanel" aria-labelledby="password-tab">
+                        <div class="card glass-card p-4 p-md-5">
+                            <h4 class="text-white fw-bold mb-4">Change Account Password</h4>
+                            <form method="post" action="{% url 'profile' %}">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="change_password">
+
+                                <div class="mb-3">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <label class="form-label text-secondary fw-semibold mb-0">Current Password</label>
+                                        <a href="#" onclick="document.getElementById('forgotPwdForm').submit(); return false;" class="small text-indigo text-decoration-none">Forgot Current Password?</a>
+                                    </div>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-dark-input text-secondary border-secondary"><i class="bi bi-shield-lock"></i></span>
+                                        <input type="password" name="current_password" class="form-control bg-dark-input text-white border-secondary" placeholder="Enter current password" required>
+                                    </div>
+                                </div>
+
+                                <div class="row g-3 mb-4">
+                                    <div class="col-sm-6">
+                                        <label class="form-label text-secondary fw-semibold">New Password</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text bg-dark-input text-secondary border-secondary"><i class="bi bi-key"></i></span>
+                                            <input type="password" name="new_password" class="form-control bg-dark-input text-white border-secondary" placeholder="At least 6 chars" required>
+                                        </div>
+                                    </div>
+                                    <div class="col-sm-6">
+                                        <label class="form-label text-secondary fw-semibold">Confirm New Password</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text bg-dark-input text-secondary border-secondary"><i class="bi bi-key-fill"></i></span>
+                                            <input type="password" name="confirm_password" class="form-control bg-dark-input text-white border-secondary" placeholder="Verify password" required>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <button type="submit" class="btn btn-premium px-5 py-2.5">
+                                    <i class="bi bi-lock me-1"></i> Update Password
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                    
+                    <!-- Hidden form to trigger forgot current password -->
+                    <form id="forgotPwdForm" method="post" action="{% url 'profile' %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="forgot_current_password">
+                    </form>
+
+                    <!-- Tab 4: Email Change -->
+                    <div class="tab-pane fade" id="email-change" role="tabpanel" aria-labelledby="email-tab">
+                        <div class="card glass-card p-4 p-md-5">
+                            <h4 class="text-white fw-bold mb-4">Change Email Address</h4>
+                            <form method="post" action="{% url 'profile' %}">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="change_email_request">
+
+                                <div class="mb-3">
+                                    <label class="form-label text-secondary fw-semibold">Current Email</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-dark-input text-secondary border-secondary"><i class="bi bi-envelope"></i></span>
+                                        <input type="email" class="form-control bg-dark-input text-secondary border-secondary" value="{{ user.email }}" readonly>
+                                    </div>
+                                </div>
+
+                                <div class="mb-4">
+                                    <label class="form-label text-secondary fw-semibold">New Email Address</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-dark-input text-secondary border-secondary"><i class="bi bi-envelope-plus"></i></span>
+                                        <input type="email" name="new_email" class="form-control bg-dark-input text-white border-secondary" placeholder="Enter new email address" required>
+                                    </div>
+                                    <p class="text-muted small mt-1"><i class="bi bi-info-circle me-1"></i> An OTP will be sent to the new email address for verification.</p>
+                                </div>
+
+                                <button type="submit" class="btn btn-premium px-5 py-2.5">
+                                    <i class="bi bi-send me-1"></i> Send OTP
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Avatar Lightbox Modal -->
+<div class="modal fade" id="avatarLightbox" tabindex="-1" aria-labelledby="avatarLightboxLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0" style="background: rgba(11, 12, 21, 0.9); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.1) !important;">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title text-white fw-bold" id="avatarLightboxLabel">Profile Photo</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center p-4">
+                <img src="" id="lightboxImage" class="img-fluid rounded-4 border border-secondary" style="max-height: 70vh; object-fit: contain; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);">
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function openLightbox(imageUrl) {
+        document.getElementById('lightboxImage').src = imageUrl;
+        const modal = new bootstrap.Modal(document.getElementById('avatarLightbox'));
+        modal.show();
+    }
+
+    function selectTheme(themeName) {
+        // Remove active class from all cards
+        document.querySelectorAll('.theme-card').forEach(card => {
+            card.classList.remove('active');
+            const icon = card.querySelector('.check-icon');
+            if (icon) icon.style.opacity = '0';
+        });
+
+        // Add active class and check radio
+        const selectedCard = document.querySelector(`.theme-${themeName}`);
+        selectedCard.classList.add('active');
+        
+        const radio = document.getElementById(`theme_${themeName}`);
+        radio.checked = true;
+
+        const icon = selectedCard.querySelector('.check-icon');
+        if (icon) icon.style.opacity = '1';
+    }
+
+    function selectThemeMode(modeName) {
+        // Remove active class from all mode cards
+        ['light', 'dark', 'night'].forEach(m => {
+            const card = document.getElementById(`modeCard_${m}`);
+            if (card) card.classList.remove('active');
+            const checkIcon = document.getElementById(`modeCheck_${m}`);
+            if (checkIcon) checkIcon.style.opacity = '0';
+        });
+
+        // Set clicked card active
+        const card = document.getElementById(`modeCard_${modeName}`);
+        if (card) card.classList.add('active');
+        const checkIcon = document.getElementById(`modeCheck_${modeName}`);
+        if (checkIcon) checkIcon.style.opacity = '1';
+
+        // Update hidden input
+        document.getElementById('selectedThemeModeInput').value = modeName;
+    }
+</script>
+{% endblock %}

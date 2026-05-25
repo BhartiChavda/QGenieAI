@@ -1,0 +1,194 @@
+{% extends 'admin_panel/admin_base.html' %}
+
+{% block title %}User Details - {{ target_user.username }}{% endblock %}
+
+{% block content %}
+<!-- Breadcrumbs -->
+<nav aria-label="breadcrumb" class="mb-4">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'admin_dashboard' %}" class="text-secondary text-decoration-none"><i class="bi bi-grid-1x2-fill me-1"></i> Dashboard</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'admin_manage_users' %}" class="text-secondary text-decoration-none">Users</a></li>
+        <li class="breadcrumb-item active text-white" aria-current="page">{{ target_user.username }}</li>
+    </ol>
+</nav>
+
+<!-- User Profile Card -->
+<div class="row mb-5">
+    <div class="col-12">
+        <div class="card admin-card p-4 p-md-5 d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-4">
+            <div class="d-flex align-items-center gap-4">
+                <div class="bg-dark rounded-circle d-flex align-items-center justify-content-center border" style="width: 80px; height: 80px; border-color: var(--border-glass) !important; color: var(--accent-primary); font-size: 2rem; font-weight: 700; box-shadow: 0 0 20px rgba(0, 210, 255, 0.15);">
+                    {{ target_user.username|slice:":2"|upper }}
+                </div>
+                <div>
+                    <h1 class="display-6 text-white fw-bold mb-2">{{ target_user.username }}</h1>
+                    <div class="d-flex flex-wrap gap-3 align-items-center">
+                        <span class="badge {% if status_label == 'Active' %}bg-success-subtle text-success border border-success{% elif status_label == 'Suspended' %}bg-danger-subtle text-danger border border-danger{% else %}bg-warning-subtle text-warning border border-warning{% endif %} px-2.5 py-1.5 fw-semibold" style="font-size: 0.75rem;">
+                            {{ status_label }}
+                        </span>
+                        {% if target_user.is_staff %}
+                            <span class="badge bg-info-subtle text-info border border-info px-2.5 py-1.5 fw-semibold" style="font-size: 0.75rem;">
+                                Administrator
+                            </span>
+                        {% endif %}
+                        <span class="text-secondary small"><i class="bi bi-envelope-fill me-1.5"></i>{{ target_user.email|default:"No email registered" }}</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Quick Actions -->
+            {% if target_user != request.user %}
+                <div class="d-flex gap-2">
+                    <a href="{% url 'admin_toggle_user' target_user.id %}" class="btn {% if target_user.is_active %}btn-admin-outline{% else %}btn-admin-success{% endif %} py-2 px-3">
+                        {% if target_user.is_active %}
+                            <i class="bi bi-person-x-fill me-1"></i> Suspend Account
+                        {% else %}
+                            <i class="bi bi-person-check-fill me-1"></i> Activate Account
+                        {% endif %}
+                    </a>
+                    <a href="{% url 'admin_delete_user' target_user.id %}" class="btn btn-admin-danger py-2 px-3 confirm-delete" data-item="user account '{{ target_user.username }}'">
+                        <i class="bi bi-trash3-fill me-1"></i> Delete User
+                    </a>
+                </div>
+            {% else %}
+                <span class="badge bg-secondary-subtle text-secondary py-2.5 px-4 small border border-secondary fw-semibold">Logged In Session</span>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Metrics Statistics Grid -->
+<div class="row g-4 mb-5">
+    <!-- Date Joined -->
+    <div class="col-md-3">
+        <div class="card admin-card p-4 h-100">
+            <h6 class="text-secondary text-uppercase fw-bold mb-2" style="font-size: 0.75rem; letter-spacing: 1px;">Joined Date</h6>
+            <h5 class="text-white fw-bold mb-1 fs-6">{{ target_user.date_joined|date:"F d, Y" }}</h5>
+            <span class="text-muted small">{{ target_user.date_joined|date:"h:i A" }}</span>
+        </div>
+    </div>
+
+    <!-- Last Login Time -->
+    <div class="col-md-3">
+        <div class="card admin-card p-4 h-100 border {% if target_user.last_login %}border-info-subtle{% endif %}" style="background: rgba(13, 202, 240, 0.03);">
+            <h6 class="text-info text-uppercase fw-bold mb-2" style="font-size: 0.75rem; letter-spacing: 1px;"><i class="bi bi-clock-history me-1"></i> Last Active / Login</h6>
+            {% if target_user.last_login %}
+                <h5 class="text-white fw-bold mb-1 fs-6">{{ target_user.last_login|date:"F d, Y" }}</h5>
+                <span class="text-secondary small">{{ target_user.last_login|date:"h:i A" }}</span>
+            {% else %}
+                <h5 class="text-muted fw-bold mb-1 fs-6">Never Logged In</h5>
+                <span class="text-muted small">No session records</span>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Files Uploaded -->
+    <div class="col-md-3">
+        <div class="card admin-card p-4 h-100">
+            <h6 class="text-secondary text-uppercase fw-bold mb-2" style="font-size: 0.75rem; letter-spacing: 1px;">Uploaded Files</h6>
+            <h2 class="text-white fw-extrabold mb-0 display-font">{{ uploaded_files|length }}</h2>
+            <span class="text-muted small">PDF & TXT uploads</span>
+        </div>
+    </div>
+
+    <!-- Questions Generated -->
+    <div class="col-md-3">
+        <div class="card admin-card p-4 h-100">
+            <h6 class="text-secondary text-uppercase fw-bold mb-2" style="font-size: 0.75rem; letter-spacing: 1px;">Questions Generated</h6>
+            <h2 class="text-white fw-extrabold mb-1 display-font">{{ total_questions }}</h2>
+            <span class="text-secondary small">{{ mcq_count }} MCQs / {{ subjective_count }} Subjective</span>
+        </div>
+    </div>
+</div>
+
+<!-- Lists Grids -->
+<div class="row g-4">
+    <!-- Upload History -->
+    <div class="col-lg-6">
+        <div class="card admin-card p-4">
+            <h5 class="text-white mb-4"><i class="bi bi-folder-fill text-purple me-2"></i> Uploaded Documents & Q&A</h5>
+            <div class="table-responsive">
+                <table class="table table-dark table-hover align-middle admin-table mb-0" style="font-size: 0.85rem;">
+                    <thead>
+                        <tr class="text-secondary small">
+                            <th scope="col" class="border-secondary py-2.5">Title</th>
+                            <th scope="col" class="border-secondary py-2.5 text-center">Type</th>
+                            <th scope="col" class="border-secondary py-2.5 text-center">Questions</th>
+                            <th scope="col" class="border-secondary py-2.5 text-end">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for f in uploaded_files %}
+                            <tr>
+                                <td class="py-2 text-white fw-semibold text-truncate" style="max-width: 180px;" title="{{ f.title }}">{{ f.title }}</td>
+                                <td class="py-2 text-center">
+                                    <span class="badge {% if f.file_type == 'PDF' %}bg-danger-subtle text-danger{% else %}bg-info-subtle text-info{% endif %}" style="font-size: 0.65rem;">
+                                        {{ f.file_type }}
+                                    </span>
+                                </td>
+                                <td class="py-2 text-center text-secondary small">
+                                    {{ f.questions.count }} MCQs / {{ f.normal_questions.count }} Subj
+                                </td>
+                                <td class="py-2 text-end">
+                                    <a href="{% url 'review_content' f.id %}" class="btn btn-admin-primary btn-xs py-1 px-2.5" style="font-size: 0.75rem;">
+                                        <i class="bi bi-eye-fill me-1"></i> View Q&A
+                                    </a>
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center py-4 text-muted small">No documents uploaded by this user.</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quiz History -->
+    <div class="col-lg-6">
+        <div class="card admin-card p-4">
+            <h5 class="text-white mb-4"><i class="bi bi-award-fill text-warning me-2"></i> Quiz Submissions & Scores</h5>
+            <div class="table-responsive">
+                <table class="table table-dark table-hover align-middle admin-table mb-0" style="font-size: 0.85rem;">
+                    <thead>
+                        <tr class="text-secondary small">
+                            <th scope="col" class="border-secondary py-2.5">Topic / File</th>
+                            <th scope="col" class="border-secondary py-2.5 text-center">Score</th>
+                            <th scope="col" class="border-secondary py-2.5 text-center">Accuracy</th>
+                            <th scope="col" class="border-secondary py-2.5 text-end">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for r in quiz_results %}
+                            <tr>
+                                <td class="py-2 text-white fw-semibold text-truncate" style="max-width: 180px;" title="{{ r.file.title }}">{{ r.file.title|default:"Deleted File" }}</td>
+                                <td class="py-2 text-center text-secondary">{{ r.score }} / {{ r.total_questions }}</td>
+                                <td class="py-2 text-center">
+                                    <span class="badge {% if r.percentage >= 80 %}bg-success-subtle text-success border border-success{% elif r.percentage >= 60 %}bg-info-subtle text-info border border-info{% else %}bg-warning-subtle text-warning border border-warning{% endif %} px-2 py-0.5 fw-semibold" style="font-size: 0.7rem;">
+                                        {{ r.percentage }}%
+                                    </span>
+                                </td>
+                                <td class="py-2 text-end">
+                                    {% if r.id %}
+                                        <a href="{% url 'quiz_result' r.id %}" class="btn btn-admin-primary btn-xs py-1 px-2.5" style="font-size: 0.75rem;">
+                                            <i class="bi bi-file-earmark-bar-graph me-1"></i> Result Sheet
+                                        </a>
+                                    {% else %}
+                                        <span class="text-muted small">Unavailable</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center py-4 text-muted small">No quiz submissions recorded for this user.</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

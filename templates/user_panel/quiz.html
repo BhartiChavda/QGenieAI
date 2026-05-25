@@ -1,0 +1,78 @@
+{% extends 'user_panel/base.html' %}
+{% load static %}
+
+{% block title %}Take Quiz - {{ file_obj.title }} - QGenie.AI{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Quiz Header -->
+    <div class="col-12 mb-4">
+        <div class="d-flex align-items-center gap-2 text-secondary mb-2">
+            <a href="{% url 'dashboard' %}" class="text-decoration-none text-secondary"><i class="bi bi-arrow-left"></i> Dashboard</a>
+            <span>/</span>
+            <span>Assessment Room</span>
+        </div>
+        <h2 class="text-white fw-bold mb-1">{{ file_obj.title }}</h2>
+        <p class="text-secondary small mb-0"><i class="bi bi-file-earmark-text me-1"></i> Source File: {{ file_obj.filename }}</p>
+    </div>
+</div>
+
+
+
+<form id="quizForm" method="post" action="{% url 'submit_quiz' %}">
+    {% csrf_token %}
+    <input type="hidden" name="file_id" value="{{ file_obj.id }}">
+
+    <div class="row">
+        <!-- Main Question Sheet -->
+        <div class="col-lg-10 mx-auto">
+            {% for q in questions %}
+                <div class="card glass-card question-card p-4 p-md-5" id="card_question_{{ forloop.counter }}">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <span class="badge bg-indigo-subtle text-indigo px-3 py-1.5 fw-bold" style="color: var(--accent-primary); background-color: rgba(99, 102, 241, 0.12);">
+                            Question {{ forloop.counter }} of {{ questions.count }}
+                        </span>
+                    </div>
+                    
+                    <h4 class="text-white mb-4 fw-semibold lh-base">{{ q.question_text }}</h4>
+                    
+                    <div class="options-sheet">
+                        <!-- Option A -->
+                        <label class="option-container" for="q_{{ q.id }}_A">
+                            <input class="form-check-input" type="radio" name="question_{{ q.id }}" id="q_{{ q.id }}_A" value="A" required>
+                            <span class="option-label"><strong class="me-2 text-indigo">A.</strong> {{ q.option_a }}</span>
+                        </label>
+                        
+                        <!-- Option B -->
+                        <label class="option-container" for="q_{{ q.id }}_B">
+                            <input class="form-check-input" type="radio" name="question_{{ q.id }}" id="q_{{ q.id }}_B" value="B">
+                            <span class="option-label"><strong class="me-2 text-indigo">B.</strong> {{ q.option_b }}</span>
+                        </label>
+                        
+                        <!-- Option C -->
+                        <label class="option-container" for="q_{{ q.id }}_C">
+                            <input class="form-check-input" type="radio" name="question_{{ q.id }}" id="q_{{ q.id }}_C" value="C">
+                            <span class="option-label"><strong class="me-2 text-indigo">C.</strong> {{ q.option_c }}</span>
+                        </label>
+                        
+                        <!-- Option D -->
+                        <label class="option-container" for="q_{{ q.id }}_D">
+                            <input class="form-check-input" type="radio" name="question_{{ q.id }}" id="q_{{ q.id }}_D" value="D">
+                            <span class="option-label"><strong class="me-2 text-indigo">D.</strong> {{ q.option_d }}</span>
+                        </label>
+                    </div>
+                </div>
+            {% endfor %}
+
+            <!-- Actions block -->
+            <div class="mb-5">
+                <button type="submit" class="btn btn-premium btn-lg w-100 py-3">
+                    <i class="bi bi-send-fill me-2"></i> Submit Assessment Answers
+                </button>
+            </div>
+        </div>
+    </div>
+</form>
+{% endblock %}
+
+

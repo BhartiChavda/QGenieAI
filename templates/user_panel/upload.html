@@ -1,0 +1,521 @@
+{% extends 'user_panel/base.html' %}
+
+{% block title %}Generate MCQs - QGenie.AI{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Tab pill customization */
+    .nav-pills .nav-link {
+        border-radius: 8px;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        border: 1px solid transparent;
+        background: transparent;
+    }
+    .nav-pills .nav-link.active {
+        background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%) !important;
+        box-shadow: 0 4px 15px var(--accent-glow);
+        border-color: transparent;
+    }
+    .nav-pills .nav-link:hover:not(.active) {
+        background: rgba(255, 255, 255, 0.05);
+    }
+
+    /* Drag & Drop Zone Styling */
+    .upload-zone {
+        border: 2px dashed rgba(99, 102, 241, 0.4);
+        background: rgba(22, 24, 47, 0.4);
+        border-radius: 16px;
+        padding: 3rem 2rem;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        position: relative;
+    }
+
+    .upload-zone:hover, .upload-zone.dragover {
+        border-color: var(--accent-primary);
+        background: rgba(99, 102, 241, 0.08);
+        box-shadow: 0 0 25px rgba(99, 102, 241, 0.15);
+    }
+
+    .upload-icon {
+        font-size: 3.5rem;
+        background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 1rem;
+        display: inline-block;
+        transition: transform 0.3s ease;
+    }
+
+    .upload-zone:hover .upload-icon {
+        transform: translateY(-5px);
+    }
+
+    /* Distractor Button Customization */
+    .btn-check:checked + .btn-premium-outline {
+        background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
+        border-color: transparent;
+        color: white;
+        box-shadow: 0 4px 12px var(--accent-glow);
+    }
+    
+    .btn-premium-outline {
+        border: 1px solid var(--border-glass);
+        background: rgba(22, 24, 47, 0.3);
+        color: var(--text-secondary);
+        transition: all 0.2s ease;
+    }
+    .btn-premium-outline:hover {
+        background: rgba(255, 255, 255, 0.05);
+        color: white;
+    }
+
+    /* Textarea Styling */
+    .bg-dark-textarea {
+        background-color: rgba(9, 10, 20, 0.6) !important;
+        border: 1px solid var(--border-glass) !important;
+        color: var(--text-primary) !important;
+        border-radius: 12px !important;
+        padding: 1rem !important;
+        transition: all 0.3s ease;
+        resize: vertical;
+        min-height: 180px;
+    }
+    .bg-dark-textarea:focus {
+        background-color: rgba(9, 10, 20, 0.9) !important;
+        border-color: var(--accent-primary) !important;
+        box-shadow: 0 0 0 4px var(--accent-glow) !important;
+    }
+
+    /* Processing Overlay */
+    .processing-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(11, 12, 21, 0.95);
+        z-index: 9999;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.4s ease;
+        backdrop-filter: blur(10px);
+    }
+
+    .processing-overlay.active {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    .loader-glow {
+        position: relative;
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(99, 102, 241, 0.2), transparent);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 2rem;
+    }
+
+    .loader-ring {
+        border: 4px solid rgba(255, 255, 255, 0.05);
+        border-top: 4px solid var(--accent-primary);
+        border-bottom: 4px solid var(--accent-secondary);
+        border-radius: 50%;
+        width: 80px;
+        height: 80px;
+        animation: spin 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    .pulse-text {
+        animation: pulse 1.8s ease-in-out infinite;
+        font-family: 'Outfit', sans-serif;
+        color: var(--text-primary);
+    }
+
+    @keyframes pulse {
+        0%, 100% { opacity: 0.6; transform: scale(0.98); }
+        50% { opacity: 1; transform: scale(1.02); }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center align-items-center" style="min-height: 75vh;">
+    <div class="col-lg-8 col-xl-7">
+        <div class="card glass-card p-4 p-md-5">
+            <div class="mb-4 text-center">
+                <h2 class="text-white fw-bold mb-2">Generate Smart Content</h2>
+                <p class="text-secondary">Provide context to generate MCQs and Subjective Questions</p>
+            </div>
+
+            <!-- Sleek Tabs Navigation -->
+            <ul class="nav nav-pills nav-justified mb-4 p-1 bg-dark-input rounded-3 border border-secondary-subtle" id="uploadTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active py-2.5 fw-semibold text-white" id="file-tab" data-bs-toggle="pill" data-bs-target="#file-pane" type="button" role="tab" aria-controls="file-pane" aria-selected="true">
+                        <i class="bi bi-file-earmark-arrow-up-fill me-1"></i> Upload File (PDF/TXT)
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link py-2.5 fw-semibold text-white" id="text-tab" data-bs-toggle="pill" data-bs-target="#text-pane" type="button" role="tab" aria-controls="text-pane" aria-selected="false">
+                        <i class="bi bi-pencil-square me-1"></i> Paste Plain Text
+                    </button>
+                </li>
+            </ul>
+
+            <!-- Form -->
+            <form id="uploadForm" method="post" action="{% url 'upload' %}" enctype="multipart/form-data">
+                {% csrf_token %}
+                
+                <!-- Hidden Input Type Variable -->
+                <input type="hidden" name="input_type" id="input_type" value="file">
+
+                <!-- Tabs Content -->
+                <div class="tab-content mb-4" id="uploadTabsContent">
+                    <!-- File Upload Tab -->
+                    <div class="tab-pane fade show active" id="file-pane" role="tabpanel" aria-labelledby="file-tab">
+                        <div class="upload-zone" id="dropZone">
+                            <input type="file" name="file" id="id_file" class="position-absolute top-0 start-0 w-100 h-100 opacity-0 cursor-pointer" accept=".pdf,.txt">
+                            <div class="upload-content py-3">
+                                <i class="bi bi-cloud-arrow-up-fill upload-icon"></i>
+                                <h4 class="text-white mb-2">Drag and drop your file here</h4>
+                                <p class="text-secondary mb-3 small">or click to browse from files</p>
+                                <span class="badge bg-secondary-subtle text-secondary py-2 px-3 small border border-secondary" id="fileInfo">Max size: 10MB</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Paste Text Tab -->
+                    <div class="tab-pane fade" id="text-pane" role="tabpanel" aria-labelledby="text-tab">
+                        <div class="mb-3">
+                            <label for="id_title" class="form-label text-secondary fw-semibold">Document Title</label>
+                            <input type="text" name="pasted_title" id="id_title" class="form-control bg-dark-input text-white border-secondary" placeholder="Enter a descriptive title for this quiz context">
+                        </div>
+                        <div class="mb-2">
+                            <label for="id_text" class="form-label text-secondary fw-semibold">Paste Your Text</label>
+                            <textarea name="pasted_text" id="id_text" class="form-control bg-dark-textarea" placeholder="Paste your study materials, articles, notes, or essays here (minimum 30 characters)..."></textarea>
+                            <div class="text-end text-muted small mt-1" id="charCount">0 characters</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Generation Type Selector -->
+                <div class="mb-4 border-top border-secondary pt-3">
+                    <label class="form-label text-secondary fw-semibold mb-3 d-block text-center text-md-start">
+                        <i class="bi bi-magic me-1 text-indigo"></i> What do you want to generate?
+                    </label>
+                    <div class="row g-2 justify-content-center">
+                        <div class="col-12 col-sm-4">
+                            <input type="radio" class="btn-check" name="gen_type" id="gen_mcq" value="mcq" checked onchange="updateGenOptions()">
+                            <label class="btn btn-premium-outline w-100 py-2 fw-semibold" for="gen_mcq">
+                                <i class="bi bi-list-check me-1"></i> MCQs Only
+                            </label>
+                        </div>
+                        <div class="col-12 col-sm-4">
+                            <input type="radio" class="btn-check" name="gen_type" id="gen_question" value="question" onchange="updateGenOptions()">
+                            <label class="btn btn-premium-outline w-100 py-2 fw-semibold" for="gen_question">
+                                <i class="bi bi-patch-question me-1"></i> Questions Only
+                            </label>
+                        </div>
+                        <div class="col-12 col-sm-4">
+                            <input type="radio" class="btn-check" name="gen_type" id="gen_both" value="both" onchange="updateGenOptions()">
+                            <label class="btn btn-premium-outline w-100 py-2 fw-semibold" for="gen_both">
+                                <i class="bi bi-stars me-1"></i> MCQ + Questions
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- With/Without Answer Toggle (shows for question/both modes) -->
+                <div id="answerToggleSection" class="mb-4 border-top border-secondary pt-3" style="display:none;">
+                    <label class="form-label text-secondary fw-semibold mb-3 d-block">
+                        <i class="bi bi-journal-text me-1 text-indigo"></i> Questions — Include Answers?
+                    </label>
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <input type="radio" class="btn-check" name="include_answers" id="ans_yes" value="yes" checked>
+                            <label class="btn btn-premium-outline w-100 py-2 fw-semibold" for="ans_yes">
+                                <i class="bi bi-check-circle me-1 text-success"></i> With Answers
+                            </label>
+                        </div>
+                        <div class="col-6">
+                            <input type="radio" class="btn-check" name="include_answers" id="ans_no" value="no">
+                            <label class="btn btn-premium-outline w-100 py-2 fw-semibold" for="ans_no">
+                                <i class="bi bi-x-circle me-1 text-secondary"></i> Without Answers
+                            </label>
+                        </div>
+                    </div>
+                    <p class="text-muted small mt-2 mb-0">
+                        <i class="bi bi-info-circle me-1"></i>
+                        "With Answers" — AI generates detailed answers for each question.
+                        "Without Answers" — Only question text, useful for exam practice.
+                    </p>
+                </div>
+
+                <!-- Quiz Option (shows for MCQ/both modes) -->
+                <div id="quizSection" class="mb-4 border-top border-secondary pt-3">
+                    <label class="form-label text-secondary fw-semibold mb-3 d-block">
+                        <i class="bi bi-controller me-1 text-indigo"></i> After Generation
+                    </label>
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <input type="radio" class="btn-check" name="after_generate" id="after_review" value="review" checked>
+                            <label class="btn btn-premium-outline w-100 py-2 fw-semibold" for="after_review">
+                                <i class="bi bi-eye me-1"></i> View Results
+                            </label>
+                        </div>
+                        <div class="col-6">
+                            <input type="radio" class="btn-check" name="after_generate" id="after_quiz" value="quiz">
+                            <label class="btn btn-premium-outline w-100 py-2 fw-semibold" for="after_quiz">
+                                <i class="bi bi-play-circle-fill me-1" style="color:#6366f1;"></i> Take Quiz Directly
+                            </label>
+                        </div>
+                    </div>
+                    <p class="text-muted small mt-2 mb-0">
+                        <i class="bi bi-info-circle me-1"></i>
+                        "Take Quiz Directly" — Immediately starts the MCQ quiz after generation.
+                    </p>
+                </div>
+
+                <!-- Difficulty Level Selection -->
+                <div class="mb-4 border-top border-secondary pt-3">
+                    <label class="form-label text-secondary fw-semibold mb-3 d-block text-center text-md-start">
+                        <i class="bi bi-speedometer2 me-1 text-indigo"></i> Select Difficulty Level
+                    </label>
+                    <div class="row g-2 justify-content-center">
+                        <div class="col-4">
+                            <input type="radio" class="btn-check" name="difficulty" id="diff_easy" value="easy">
+                            <label class="btn btn-premium-outline w-100 py-2 fw-semibold" for="diff_easy">
+                                <i class="bi bi-emoji-smile me-1 text-success"></i> Easy
+                            </label>
+                        </div>
+                        <div class="col-4">
+                            <input type="radio" class="btn-check" name="difficulty" id="diff_medium" value="medium" checked>
+                            <label class="btn btn-premium-outline w-100 py-2 fw-semibold" for="diff_medium">
+                                <i class="bi bi-emoji-neutral me-1 text-warning"></i> Medium
+                            </label>
+                        </div>
+                        <div class="col-4">
+                            <input type="radio" class="btn-check" name="difficulty" id="diff_hard" value="hard">
+                            <label class="btn btn-premium-outline w-100 py-2 fw-semibold" for="diff_hard">
+                                <i class="bi bi-emoji-frown me-1 text-danger"></i> Hard
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- MCQ Count Selector -->
+                <div class="mb-4 border-top border-secondary pt-3">
+                    <label class="form-label text-secondary fw-semibold mb-3 d-block text-center text-md-start">
+                        <i class="bi bi-question-circle-fill me-1 text-indigo"></i> How many questions would you like to generate?
+                    </label>
+                    <div class="row g-2 justify-content-center">
+                        <div class="col-6 col-sm-3">
+                            <input type="radio" class="btn-check" name="num_questions" id="q5" value="5" checked>
+                            <label class="btn btn-premium-outline w-100 py-2.5 fw-semibold" for="q5">5 Questions</label>
+                        </div>
+                        <div class="col-6 col-sm-3">
+                            <input type="radio" class="btn-check" name="num_questions" id="q10" value="10">
+                            <label class="btn btn-premium-outline w-100 py-2.5 fw-semibold" for="q10">10 Questions</label>
+                        </div>
+                        <div class="col-6 col-sm-3">
+                            <input type="radio" class="btn-check" name="num_questions" id="q15" value="15">
+                            <label class="btn btn-premium-outline w-100 py-2.5 fw-semibold" for="q15">15 Questions</label>
+                        </div>
+                        <div class="col-6 col-sm-3">
+                            <input type="radio" class="btn-check" name="num_questions" id="q20" value="20">
+                            <label class="btn btn-premium-outline w-100 py-2.5 fw-semibold" for="q20">20 Questions</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-4">
+                    <button type="submit" class="btn btn-premium w-100 py-3" id="submitBtn" disabled>
+                        <i class="bi bi-cpu-fill me-1"></i> Generate Content
+                    </button>
+                    <a href="{% url 'dashboard' %}" class="btn btn-premium-outline w-100 py-3 mt-3">
+                        <i class="bi bi-arrow-left me-1"></i> Back to Dashboard
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Full-screen Loading Overlay for processing -->
+<div class="processing-overlay" id="loaderOverlay">
+    <div class="loader-glow">
+        <div class="loader-ring"></div>
+    </div>
+    <h3 class="pulse-text fw-bold" id="loaderTitle">Analyzing Content...</h3>
+    <p class="text-secondary small text-center px-4 max-w-sm" id="loaderText">Our AI service is reading content, extracting facts, and building your personalized Multiple Choice Questions. This takes approximately 10-20 seconds.</p>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const fileInput = document.getElementById("id_file");
+        const dropZone = document.getElementById("dropZone");
+        const fileInfo = document.getElementById("fileInfo");
+        const submitBtn = document.getElementById("submitBtn");
+        const uploadForm = document.getElementById("uploadForm");
+        const loaderOverlay = document.getElementById("loaderOverlay");
+        const loaderTitle = document.getElementById("loaderTitle");
+        const loaderText = document.getElementById("loaderText");
+        
+        // Input variables
+        const inputType = document.getElementById("input_type");
+        const pastedText = document.getElementById("id_text");
+        const pastedTitle = document.getElementById("id_title");
+        const charCount = document.getElementById("charCount");
+        
+        // Tabs
+        const fileTab = document.getElementById("file-tab");
+        const textTab = document.getElementById("text-tab");
+
+        // Tab Switching Logic
+        fileTab.addEventListener("click", function() {
+            inputType.value = "file";
+            validateForm();
+        });
+
+        textTab.addEventListener("click", function() {
+            inputType.value = "text";
+            validateForm();
+        });
+
+        // Pasted Text Character Count & Input Monitoring
+        pastedText.addEventListener("input", function() {
+            const count = pastedText.value.length;
+            charCount.textContent = `${count} characters`;
+            if (count < 30) {
+                charCount.className = "text-end text-danger small mt-1";
+            } else {
+                charCount.className = "text-end text-success small mt-1";
+            }
+            validateForm();
+        });
+
+        pastedTitle.addEventListener("input", validateForm);
+
+        // Drag events listeners
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropZone.addEventListener(eventName, (e) => {
+                e.preventDefault();
+                dropZone.classList.add('dragover');
+            }, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, (e) => {
+                e.preventDefault();
+                dropZone.classList.remove('dragover');
+            }, false);
+        });
+
+        // Trigger on drop
+        dropZone.addEventListener('drop', (e) => {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            if (files.length) {
+                fileInput.files = files;
+                updateFileInfo(files[0]);
+            }
+        });
+
+        // Trigger on selection
+        fileInput.addEventListener('change', function() {
+            if (fileInput.files.length) {
+                updateFileInfo(fileInput.files[0]);
+            }
+        });
+
+        function updateFileInfo(file) {
+            const extension = file.name.split('.').pop().toLowerCase();
+            if (extension === 'pdf' || extension === 'txt') {
+                fileInfo.textContent = `Selected: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`;
+                fileInfo.className = "badge bg-success-subtle text-success py-2 px-3 small border border-success";
+            } else {
+                fileInfo.textContent = "Invalid format! Upload a .pdf or .txt file.";
+                fileInfo.className = "badge bg-danger-subtle text-danger py-2 px-3 small border border-danger";
+                fileInput.value = ""; // Reset
+            }
+            validateForm();
+        }
+
+        // Form Validation Master Controller
+        function validateForm() {
+            if (inputType.value === "file") {
+                if (fileInput.files.length > 0) {
+                    const ext = fileInput.files[0].name.split('.').pop().toLowerCase();
+                    submitBtn.disabled = !(ext === 'pdf' || ext === 'txt');
+                } else {
+                    submitBtn.disabled = true;
+                }
+            } else { // text tab
+                const textLength = pastedText.value.trim().length;
+                submitBtn.disabled = (textLength < 30);
+            }
+        }
+
+        // Display full-screen overlay during submission processing
+        uploadForm.addEventListener('submit', function(e) {
+            const numQs = document.querySelector('input[name="num_questions"]:checked').value;
+            const genType = document.querySelector('input[name="gen_type"]:checked').value;
+            const afterGen = document.querySelector('input[name="after_generate"]:checked')?.value || 'review';
+
+            let titleText = 'Generating Content...';
+            let bodyText = '';
+
+            if (genType === 'mcq') {
+                titleText = afterGen === 'quiz' ? '🎮 Preparing Your Quiz...' : '📋 Generating MCQs...';
+                bodyText = `AI is generating ${numQs} Multiple Choice Questions. ${afterGen === 'quiz' ? 'Your quiz will start automatically!' : 'This takes 10-20 seconds.'}`;
+            } else if (genType === 'question') {
+                titleText = '❓ Generating Questions...';
+                bodyText = `AI is crafting ${numQs} smart subjective questions from your content. Please wait...`;
+            } else {
+                titleText = '✨ Generating MCQs + Questions...';
+                bodyText = `AI is generating ${numQs} MCQs and ${numQs} Questions from your content. This may take 20-40 seconds.`;
+            }
+
+            loaderTitle.textContent = titleText;
+            loaderText.textContent = bodyText;
+            loaderOverlay.classList.add('active');
+        });
+    });
+
+    // Show/hide answer toggle and quiz section based on gen_type
+    function updateGenOptions() {
+        const genType = document.querySelector('input[name="gen_type"]:checked').value;
+        const ansSection = document.getElementById('answerToggleSection');
+        const quizSection = document.getElementById('quizSection');
+
+        // Show answer toggle only for question/both
+        if (genType === 'question' || genType === 'both') {
+            ansSection.style.display = 'block';
+        } else {
+            ansSection.style.display = 'none';
+        }
+
+        // Show quiz section only when MCQ is involved
+        if (genType === 'mcq' || genType === 'both') {
+            quizSection.style.display = 'block';
+        } else {
+            quizSection.style.display = 'none';
+        }
+    }
+</script>
+{% endblock %}

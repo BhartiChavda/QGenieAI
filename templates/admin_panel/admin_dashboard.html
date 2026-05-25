@@ -1,0 +1,145 @@
+{% extends 'admin_panel/admin_base.html' %}
+
+{% block title %}Admin Dashboard - QGenie.AI{% endblock %}
+
+{% block content %}
+<!-- Welcome & Header -->
+<div class="row mb-5">
+    <div class="col-12">
+        <div class="card admin-card p-4 p-md-5" style="background: linear-gradient(135deg, rgba(17, 20, 38, 0.8) 0%, rgba(12, 14, 28, 0.8) 100%);">
+            <h1 class="display-6 text-white fw-bold mb-2"><i class="bi bi-shield-fill-check text-info"></i> Platform Administration</h1>
+            <p class="text-secondary mb-0">System Control Center. Monitor user activities, delete records, suspend user access, and maintain AI question libraries.</p>
+        </div>
+    </div>
+</div>
+
+<!-- Grid metrics counts -->
+<div class="row g-4 mb-5">
+    <!-- Total Users -->
+    <div class="col-md-3">
+        <div class="card admin-card p-4 d-flex flex-row align-items-center justify-content-between">
+            <div>
+                <h6 class="text-secondary text-uppercase fw-bold mb-1" style="font-size: 0.75rem; letter-spacing: 1px;">Registered Users</h6>
+                <h2 class="text-white fw-extrabold mb-0 display-font">{{ total_users }}</h2>
+            </div>
+            <div class="bg-gradient text-white rounded-3 d-flex align-items-center justify-content-center" style="width: 48px; height: 48px; background: linear-gradient(135deg, #00d2ff, #0072ff);">
+                <i class="bi bi-people-fill fs-4"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Total Documents -->
+    <div class="col-md-3">
+        <div class="card admin-card p-4 d-flex flex-row align-items-center justify-content-between">
+            <div>
+                <h6 class="text-secondary text-uppercase fw-bold mb-1" style="font-size: 0.75rem; letter-spacing: 1px;">Uploaded Files</h6>
+                <h2 class="text-white fw-extrabold mb-0 display-font">{{ total_files }}</h2>
+            </div>
+            <div class="bg-gradient text-white rounded-3 d-flex align-items-center justify-content-center" style="width: 48px; height: 48px; background: linear-gradient(135deg, #ff007f, #a855f7);">
+                <i class="bi bi-folder-fill fs-4"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Total Questions -->
+    <div class="col-md-3">
+        <div class="card admin-card p-4 d-flex flex-row align-items-center justify-content-between">
+            <div>
+                <h6 class="text-secondary text-uppercase fw-bold mb-1" style="font-size: 0.75rem; letter-spacing: 1px;">Generated Questions</h6>
+                <h2 class="text-white fw-extrabold mb-0 display-font">{{ total_questions }}</h2>
+            </div>
+            <div class="bg-gradient text-white rounded-3 d-flex align-items-center justify-content-center" style="width: 48px; height: 48px; background: linear-gradient(135deg, #10b981, #059669);">
+                <i class="bi bi-question-circle-fill fs-4"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Total Attempts -->
+    <div class="col-md-3">
+        <div class="card admin-card p-4 d-flex flex-row align-items-center justify-content-between">
+            <div>
+                <h6 class="text-secondary text-uppercase fw-bold mb-1" style="font-size: 0.75rem; letter-spacing: 1px;">Quizzes Completed</h6>
+                <h2 class="text-white fw-extrabold mb-0 display-font">{{ total_attempts }}</h2>
+            </div>
+            <div class="bg-gradient text-white rounded-3 d-flex align-items-center justify-content-center" style="width: 48px; height: 48px; background: linear-gradient(135deg, #f59e0b, #d97706);">
+                <i class="bi bi-award-fill fs-4"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Detailed Logs Stream grids -->
+<div class="row g-4">
+    <!-- Recent Users -->
+    <div class="col-lg-4">
+        <div class="card admin-card p-4 h-100">
+            <h5 class="text-white mb-4"><i class="bi bi-people-fill text-info me-2"></i> Recent Registrations</h5>
+            {% if recent_users %}
+                <div class="d-flex flex-column gap-3">
+                    {% for u in recent_users %}
+                        <div class="d-flex justify-content-between align-items-center p-2 rounded" style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-glass);">
+                            <div>
+                                <span class="text-white fw-bold d-block">{{ u.username }}</span>
+                                <span class="text-secondary small" style="font-size:0.75rem;">{{ u.email }}</span>
+                            </div>
+                            <span class="badge {% if u.is_active %}bg-success-subtle text-success{% else %}bg-danger-subtle text-danger{% endif %} px-2 py-1" style="font-size:0.65rem;">
+                                {% if u.is_active %}Active{% else %}Inactive{% endif %}
+                            </span>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="text-muted text-center py-4">No users found.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Recent Uploads -->
+    <div class="col-lg-4">
+        <div class="card admin-card p-4 h-100">
+            <h5 class="text-white mb-4"><i class="bi bi-folder-fill text-purple me-2"></i> Recent Documents</h5>
+            {% if recent_files %}
+                <div class="d-flex flex-column gap-3">
+                    {% for f in recent_files %}
+                        <div class="d-flex justify-content-between align-items-center p-2 rounded" style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-glass);">
+                            <div class="text-truncate" style="max-width: 180px;">
+                                <span class="text-white fw-bold d-block text-truncate" title="{{ f.title }}">{{ f.title }}</span>
+                                <span class="text-secondary small" style="font-size:0.75rem;"><i class="bi bi-person me-1"></i>{{ f.user.username }}</span>
+                            </div>
+                            <span class="badge {% if f.file_type == 'PDF' %}bg-danger-subtle text-danger{% else %}bg-info-subtle text-info{% endif %}" style="font-size:0.65rem;">
+                                {{ f.file_type }}
+                            </span>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="text-muted text-center py-4">No files uploaded.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Recent Attempts -->
+    <div class="col-lg-4">
+        <div class="card admin-card p-4 h-100">
+            <h5 class="text-white mb-4"><i class="bi bi-award-fill text-warning me-2"></i> Recent Submissions</h5>
+            {% if recent_results %}
+                <div class="d-flex flex-column gap-3">
+                    {% for r in recent_results %}
+                        <div class="d-flex justify-content-between align-items-center p-2 rounded" style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-glass);">
+                            <div class="text-truncate" style="max-width: 180px;">
+                                <span class="text-white fw-bold d-block text-truncate" title="{{ r.file.title }}">{{ r.file.title|default:"Deleted File" }}</span>
+                                <span class="text-secondary small" style="font-size:0.75rem;"><i class="bi bi-person me-1"></i>{{ r.user.username }}</span>
+                            </div>
+                            <span class="badge {% if r.percentage >= 80 %}bg-success-subtle text-success{% elif r.percentage >= 60 %}bg-info-subtle text-info{% else %}bg-warning-subtle text-warning{% endif %} px-2 py-1" style="font-size:0.7rem;">
+                                {{ r.percentage }}%
+                            </span>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="text-muted text-center py-4">No test submissions.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,248 @@
+{% extends 'user_panel/base.html' %}
+
+{% block title %}Summary Sheet & Flashcards - {{ file_obj.title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Flashcard Flip Styling */
+    .flashcard-wrapper {
+        perspective: 1000px;
+        cursor: pointer;
+        height: 200px;
+    }
+    
+    .flashcard-inner {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        text-align: center;
+        transition: transform 0.6s;
+        transform-style: preserve-3d;
+    }
+    
+    .flashcard-wrapper.flipped .flashcard-inner {
+        transform: rotateY(180deg);
+    }
+    
+    .flashcard-front, .flashcard-back {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        -webkit-backface-visibility: hidden;
+        backface-visibility: hidden;
+        border-radius: 16px;
+        padding: 1.5rem;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid var(--border-glass);
+    }
+    
+    .flashcard-front {
+        background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(168, 85, 247, 0.1) 100%);
+        color: white;
+    }
+    
+    .flashcard-back {
+        background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(5, 150, 105, 0.1) 100%);
+        color: white;
+        transform: rotateY(180deg);
+    }
+
+    .markdown-rendered-summary p.text-secondary,
+    .markdown-rendered-summary ul.text-secondary {
+        color: #cbd5e1 !important; /* Beautiful readable light slate in dark modes */
+        font-size: 1.05rem;
+        line-height: 1.7;
+    }
+
+    {% if user.profile.theme_mode == 'light' %}
+    .flashcard-front {
+        background: linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(168, 85, 247, 0.05) 100%) !important;
+        color: #0f172a !important;
+        border-color: rgba(99, 102, 241, 0.2) !important;
+    }
+    .flashcard-back {
+        background: linear-gradient(135deg, rgba(16, 185, 129, 0.05) 0%, rgba(5, 150, 105, 0.05) 100%) !important;
+        color: #0f172a !important;
+        border-color: rgba(16, 185, 129, 0.2) !important;
+    }
+    .markdown-rendered-summary h2 {
+        color: #4f46e5 !important;
+    }
+    .markdown-rendered-summary h3 {
+        color: #1e1b4b !important;
+    }
+    .markdown-rendered-summary p.text-secondary,
+    .markdown-rendered-summary ul.text-secondary {
+        color: #334155 !important; /* Premium dark gray/slate in light mode */
+    }
+    {% endif %}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+        
+        <!-- Premium Back Button & Breadcrumbs -->
+        <div class="d-flex align-items-center gap-3 mb-4">
+            <button onclick="window.history.back()"
+                class="btn d-flex align-items-center justify-content-center flex-shrink-0"
+                title="Go Back"
+                style="width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,0.06);
+                       border:1px solid rgba(255,255,255,0.1);color:#94a3b8;transition:all 0.2s ease;"
+                onmouseover="this.style.background='rgba(99,102,241,0.2)';this.style.color='#a5b4fc';"
+                onmouseout="this.style.background='rgba(255,255,255,0.06)';this.style.color='#94a3b8';">
+                <i class="bi bi-arrow-left"></i>
+            </button>
+            <div class="text-secondary small">
+                <a href="{% url 'dashboard' %}" class="text-decoration-none text-secondary hover-indigo">Dashboard</a>
+                <span class="mx-1">/</span>
+                <a href="{% url 'review_content' file_obj.id %}" class="text-decoration-none text-secondary hover-indigo">Review Content</a>
+                <span class="mx-1">/</span>
+                <span class="text-white">Summary</span>
+            </div>
+        </div>
+
+        <div class="card glass-card p-4 p-md-5">
+            
+            <!-- Header section -->
+            <div class="d-flex align-items-center justify-content-between mb-4 pb-3 border-bottom border-secondary">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="bg-gradient text-white rounded-3 d-flex align-items-center justify-content-center" style="width: 50px; height: 50px; background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary)); box-shadow: 0 4px 15px var(--accent-glow);">
+                        <i class="bi bi-file-earmark-slides-fill fs-4"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-white mb-0">{{ file_obj.title }} Summary</h3>
+                        <p class="text-secondary small mb-0"><i class="bi bi-cpu-fill text-indigo me-1"></i> AI Study Sheet & Key Insights</p>
+                    </div>
+                </div>
+                <button onclick="window.location.href='{% url 'review_content' file_obj.id %}'" class="btn btn-premium-outline btn-sm">
+                    <i class="bi bi-arrow-left"></i> Back to Review
+                </button>
+            </div>
+
+            <!-- Markdown Render Area -->
+            <div class="markdown-rendered-summary fs-5 mb-5" id="summaryRendered">
+                <!-- This will be parsed client-side using a clean JS parser -->
+                <div class="d-none" id="rawMarkdown">{{ file_obj.summary_markdown }}</div>
+                <div class="text-center py-5" id="summarySpinner">
+                    <div class="spinner-border text-indigo mb-2" role="status"></div>
+                    <p class="text-secondary small">Compiling study nodes...</p>
+                </div>
+                <div id="compiledContent" class="lh-base"></div>
+            </div>
+
+            <!-- Interactive Revision Flashcards Section -->
+            <div class="border-top border-secondary pt-4 mt-4">
+                <h4 class="text-white mb-3"><i class="bi bi-layers-half text-indigo me-2"></i>Interactive Revision Flashcards</h4>
+                <p class="text-secondary small mb-4">Click or hover on any flashcard to flip and reveal the answer!</p>
+                
+                <div class="row g-4" id="flashcardsContainer">
+                    <!-- Flashcard 1 -->
+                    <div class="col-md-4">
+                        <div class="flashcard-wrapper" onclick="toggleFlip(this)">
+                            <div class="flashcard-inner">
+                                <div class="flashcard-front">
+                                    <span class="badge bg-secondary-subtle text-secondary mb-2 small">Concept #1</span>
+                                    <h6 class="fw-bold mb-0">What is the primary topic of the document?</h6>
+                                </div>
+                                <div class="flashcard-back">
+                                    <span class="badge bg-success-subtle text-success mb-2 small">Answer</span>
+                                    <p class="mb-0 text-center fs-7">{{ file_obj.title }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Flashcard 2 -->
+                    <div class="col-md-4">
+                        <div class="flashcard-wrapper" onclick="toggleFlip(this)">
+                            <div class="flashcard-inner">
+                                <div class="flashcard-front">
+                                    <span class="badge bg-secondary-subtle text-secondary mb-2 small">Concept #2</span>
+                                    <h6 class="fw-bold mb-0">What is the difficulty of this study guide?</h6>
+                                </div>
+                                <div class="flashcard-back">
+                                    <span class="badge bg-success-subtle text-success mb-2 small">Answer</span>
+                                    <p class="mb-0 text-center fs-7">{{ file_obj.difficulty|title }} Level</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Flashcard 3 -->
+                    <div class="col-md-4">
+                        <div class="flashcard-wrapper" onclick="toggleFlip(this)">
+                            <div class="flashcard-inner">
+                                <div class="flashcard-front">
+                                    <span class="badge bg-secondary-subtle text-secondary mb-2 small">Concept #3</span>
+                                    <h6 class="fw-bold mb-0">Date generated?</h6>
+                                </div>
+                                <div class="flashcard-back">
+                                    <span class="badge bg-success-subtle text-success mb-2 small">Answer</span>
+                                    <p class="mb-0 text-center fs-7">{{ file_obj.uploaded_at|date:"d M Y" }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Toggle flip handler
+    function toggleFlip(element) {
+        element.classList.toggle("flipped");
+    }
+
+    document.addEventListener("DOMContentLoaded", function() {
+        const rawMarkdown = document.getElementById("rawMarkdown").textContent.trim();
+        const compiledContent = document.getElementById("compiledContent");
+        const summarySpinner = document.getElementById("summarySpinner");
+
+        // Parse summary Markdown dynamically in the frontend!
+        setTimeout(() => {
+            summarySpinner.classList.add("d-none");
+            compiledContent.innerHTML = formatMarkdownToHTML(rawMarkdown);
+        }, 300);
+
+        function formatMarkdownToHTML(md) {
+            if (!md) return "<p class='text-secondary'>No summary generated.</p>";
+            let html = md;
+
+            // Headers
+            html = html.replace(/^##\s*(.*?)$/gm, "<h3 class='text-white mt-4 mb-3 border-bottom border-secondary pb-2'>$1</h3>");
+            html = html.replace(/^#\s*(.*?)$/gm, "<h2 class='text-white mt-4 mb-3'>$1</h2>");
+            
+            // Bold
+            html = html.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
+
+            // Bullet lists
+            html = html.replace(/^\s*-\s*(.*?)$/gm, "<li>$1</li>");
+            html = html.replace(/(<li>.*?<\/li>)/g, "<ul class='ps-4 mb-3 text-secondary'>$1</ul>");
+            html = html.replace(/<\/ul>\s*<ul class='ps-4 mb-3 text-secondary'>/g, "");
+
+            // Split by single newlines first, then wrap lines that are not headers or lists in paragraphs
+            const lines = html.split(/\n+/);
+            const formattedLines = lines.map(line => {
+                line = line.trim();
+                if (!line) return "";
+                if (line.startsWith("<h3") || line.startsWith("<h2") || line.startsWith("<ul") || line.startsWith("<li") || line.startsWith("<ul>") || line.startsWith("<li>")) {
+                    return line;
+                }
+                return `<p class='text-secondary mb-3'>${line}</p>`;
+            });
+
+            return formattedLines.join("\n");
+        }
+    });
+</script>
+{% endblock %}

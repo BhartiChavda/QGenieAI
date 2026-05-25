@@ -1,0 +1,376 @@
+{% extends 'user_panel/base.html' %}
+{% load static %}
+
+{% block title %}History - QGenie.AI{% endblock %}
+
+{% block extra_css %}
+<style>
+    .history-tab-btn {
+        background: transparent;
+        border: 1px solid rgba(255,255,255,0.1);
+        color: #94a3b8;
+        border-radius: 10px;
+        padding: 0.6rem 1.4rem;
+        font-size: 0.9rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    .history-tab-btn.active {
+        background: linear-gradient(135deg, rgba(99,102,241,0.2), rgba(168,85,247,0.15));
+        border-color: rgba(99,102,241,0.5);
+        color: #a5b4fc;
+    }
+
+    .gen-card {
+        background: rgba(17,20,38,0.7);
+        border: 1px solid rgba(255,255,255,0.07);
+        border-radius: 14px;
+        padding: 1.2rem 1.5rem;
+        transition: all 0.25s ease;
+        display: flex;
+        align-items: center;
+        gap: 1.2rem;
+        margin-bottom: 0.85rem;
+    }
+    .gen-card:hover {
+        border-color: rgba(99,102,241,0.3);
+        transform: translateX(4px);
+        box-shadow: 0 6px 20px rgba(99,102,241,0.07);
+    }
+
+    .file-icon-box {
+        width: 48px; height: 48px;
+        border-radius: 12px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.4rem;
+        flex-shrink: 0;
+    }
+    .file-icon-box.pdf { background: rgba(239,68,68,0.12); color: #ef4444; }
+    .file-icon-box.txt { background: rgba(99,102,241,0.12); color: #6366f1; }
+
+    .badge-type {
+        font-size: 0.7rem;
+        font-weight: 700;
+        letter-spacing: 0.05em;
+        padding: 0.3rem 0.7rem;
+        border-radius: 20px;
+    }
+    .badge-mcq { background: rgba(99,102,241,0.15); color: #a5b4fc; border: 1px solid rgba(99,102,241,0.25); }
+    .badge-q { background: rgba(168,85,247,0.15); color: #d8b4fe; border: 1px solid rgba(168,85,247,0.25); }
+    .badge-both { background: rgba(16,185,129,0.12); color: #6ee7b7; border: 1px solid rgba(16,185,129,0.25); }
+
+    .score-circle {
+        width: 48px; height: 48px;
+        border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 0.8rem; font-weight: 700;
+        flex-shrink: 0;
+    }
+    .score-high { background: rgba(16,185,129,0.15); color: #6ee7b7; border: 2px solid rgba(16,185,129,0.3); }
+    .score-mid { background: rgba(59,130,246,0.15); color: #93c5fd; border: 2px solid rgba(59,130,246,0.3); }
+    .score-low { background: rgba(239,68,68,0.12); color: #fca5a5; border: 2px solid rgba(239,68,68,0.25); }
+
+    .action-link {
+        background: transparent;
+        border: 1px solid rgba(255,255,255,0.1);
+        color: #94a3b8;
+        padding: 0.4rem 0.9rem;
+        border-radius: 7px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.2s ease;
+        white-space: nowrap;
+    }
+    .action-link:hover {
+        border-color: rgba(99,102,241,0.4);
+        color: #a5b4fc;
+        background: rgba(99,102,241,0.08);
+    }
+    .action-link.primary {
+        background: linear-gradient(135deg, #6366f1, #a855f7);
+        border: none;
+        color: white;
+    }
+    .action-link.primary:hover {
+        opacity: 0.9;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(99,102,241,0.3);
+        color: white;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 3.5rem 1rem;
+        color: #64748b;
+    }
+    .section-label {
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: #475569;
+        margin-bottom: 1rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+
+    {% if user.profile.theme_mode == 'light' %}
+    /* Premium Light Mode Overrides for History Page */
+    .history-tab-btn {
+        border-color: rgba(0, 0, 0, 0.08);
+        color: #64748b;
+    }
+    .history-tab-btn:hover {
+        color: #4f46e5;
+        border-color: rgba(99, 102, 241, 0.25);
+    }
+    .history-tab-btn.active {
+        background: rgba(99, 102, 241, 0.06) !important;
+        border-color: rgba(99, 102, 241, 0.5) !important;
+        color: #4f46e5 !important;
+    }
+    .gen-card {
+        background: rgba(255, 255, 255, 0.7) !important;
+        border: 1px solid rgba(0, 0, 0, 0.06) !important;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.01) !important;
+    }
+    .gen-card:hover {
+        border-color: rgba(99, 102, 241, 0.25) !important;
+        box-shadow: 0 8px 25px rgba(99, 102, 241, 0.04) !important;
+    }
+    .gen-card .text-white {
+        color: #0f172a !important;
+    }
+    .gen-card .text-secondary {
+        color: #64748b !important;
+    }
+    .badge-mcq {
+        background: rgba(99, 102, 241, 0.06) !important;
+        color: #4f46e5 !important;
+        border-color: rgba(99, 102, 241, 0.15) !important;
+    }
+    .badge-q {
+        background: rgba(168, 85, 247, 0.06) !important;
+        color: #7c3aed !important;
+        border-color: rgba(168, 85, 247, 0.15) !important;
+    }
+    .badge-both {
+        background: rgba(16, 185, 129, 0.06) !important;
+        color: #059669 !important;
+        border-color: rgba(16, 185, 129, 0.15) !important;
+    }
+    .action-link {
+        border-color: rgba(0, 0, 0, 0.08) !important;
+        color: #475569 !important;
+    }
+    .action-link:hover {
+        background: rgba(99, 102, 241, 0.04) !important;
+        color: #4f46e5 !important;
+        border-color: rgba(99, 102, 241, 0.3) !important;
+    }
+    .action-link.primary {
+        color: #ffffff !important;
+    }
+    .section-label {
+        border-bottom-color: rgba(0, 0, 0, 0.05) !important;
+        color: #64748b !important;
+    }
+    .empty-state h5 {
+        color: #0f172a !important;
+    }
+    .score-circle.score-high {
+        background: rgba(16, 185, 129, 0.06) !important;
+        color: #059669 !important;
+        border-color: rgba(16, 185, 129, 0.2) !important;
+    }
+    .score-circle.score-mid {
+        background: rgba(59, 130, 246, 0.06) !important;
+        color: #2563eb !important;
+        border-color: rgba(59, 130, 246, 0.2) !important;
+    }
+    .score-circle.score-low {
+        background: rgba(239, 68, 68, 0.06) !important;
+        color: #dc2626 !important;
+        border-color: rgba(239, 68, 68, 0.2) !important;
+    }
+    {% endif %}
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="row mb-4 align-items-center">
+    <div class="col">
+        <div class="d-flex align-items-center gap-2 text-secondary small mb-1">
+            <a href="{% url 'dashboard' %}" class="text-decoration-none text-secondary"><i class="bi bi-arrow-left"></i> Dashboard</a>
+            <span>/</span>
+            <span>History</span>
+        </div>
+        <h2 class="text-white fw-bold mb-0"><i class="bi bi-clock-history me-2 text-indigo"></i>My History</h2>
+        <p class="text-secondary small mt-1 mb-0">Track all your generated content and quiz quiz results in one place.</p>
+    </div>
+    <div class="col-auto">
+        <a href="{% url 'upload' %}" class="btn btn-premium btn-sm py-2 px-4">
+            <i class="bi bi-plus-circle me-1"></i> Generate New
+        </a>
+    </div>
+</div>
+
+<!-- Tab Switcher -->
+<div class="d-flex gap-2 mb-4 flex-wrap">
+    <button class="history-tab-btn active" id="tabGenerated" onclick="switchTab('generated')">
+        <i class="bi bi-file-earmark-text me-1"></i> Generated Content
+        {% if uploaded_files %}<span class="ms-1 badge rounded-pill" style="background:rgba(99,102,241,0.2);color:#a5b4fc;font-size:0.7rem;">{{ uploaded_files.count }}</span>{% endif %}
+    </button>
+    <button class="history-tab-btn" id="tabQuiz" onclick="switchTab('quiz')">
+        <i class="bi bi-journal-check me-1"></i> Quiz Results
+        {% if results %}<span class="ms-1 badge rounded-pill" style="background:rgba(168,85,247,0.2);color:#d8b4fe;font-size:0.7rem;">{{ results.count }}</span>{% endif %}
+    </button>
+</div>
+
+<!-- ===== SECTION: Generated Content ===== -->
+<div id="section-generated">
+    {% if uploaded_files %}
+        <div class="section-label">All Uploads & Generated Content</div>
+        {% for f in uploaded_files %}
+        <div class="gen-card">
+            <!-- File Icon -->
+            <div class="file-icon-box {% if f.file_type == 'PDF' %}pdf{% else %}txt{% endif %}">
+                {% if f.file_type == 'PDF' %}
+                    <i class="bi bi-file-earmark-pdf-fill"></i>
+                {% else %}
+                    <i class="bi bi-file-earmark-text-fill"></i>
+                {% endif %}
+            </div>
+
+            <!-- Info -->
+            <div class="flex-grow-1 min-width-0">
+                <div class="d-flex align-items-center flex-wrap gap-2 mb-1">
+                    <span class="text-white fw-semibold text-truncate" style="max-width:300px;" title="{{ f.title }}">{{ f.title }}</span>
+                    <span class="badge-type badge-mcq">{{ f.file_type }}</span>
+                    {% if f.questions.count > 0 %}
+                        <span class="badge-type badge-mcq"><i class="bi bi-list-check me-1"></i>{{ f.questions.count }} MCQs</span>
+                    {% endif %}
+                    {% if f.normal_questions.count > 0 %}
+                        <span class="badge-type badge-q"><i class="bi bi-patch-question me-1"></i>{{ f.normal_questions.count }} Qs</span>
+                    {% endif %}
+                </div>
+                <div class="text-secondary" style="font-size:0.8rem;">
+                    <i class="bi bi-calendar3 me-1"></i> {{ f.uploaded_at|date:"M d, Y · h:i A" }}
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="d-flex gap-2 flex-wrap ms-auto">
+                {% if f.file_type == 'PDF' %}
+                <a href="{% url 'file_preview' f.id %}" class="action-link">
+                    <i class="bi bi-eye-fill me-1"></i> Preview
+                </a>
+                {% endif %}
+                <a href="{% url 'review_content' f.id %}" class="action-link">
+                    <i class="bi bi-stars me-1"></i> Content
+                </a>
+                {% if f.questions.count > 0 %}
+                <a href="{% url 'quiz' f.id %}" class="action-link primary">
+                    <i class="bi bi-play-fill me-1"></i> Quiz
+                </a>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="empty-state">
+            <i class="bi bi-file-earmark-text fs-1 mb-3 d-block"></i>
+            <h5 class="text-white">No content generated yet</h5>
+            <p class="small mb-3">Upload a PDF or paste text to generate MCQs and Questions.</p>
+            <a href="{% url 'upload' %}" class="btn btn-premium btn-sm px-4 py-2">
+                <i class="bi bi-cloud-arrow-up-fill me-1"></i> Start Generating
+            </a>
+        </div>
+    {% endif %}
+</div>
+
+<!-- ===== SECTION: Quiz Results ===== -->
+<div id="section-quiz" style="display:none;">
+    {% if results %}
+        <div class="section-label">All Quiz Attempts</div>
+        {% for res in results %}
+        <div class="gen-card">
+            <!-- Score Circle -->
+            <div class="score-circle {% if res.percentage >= 80 %}score-high{% elif res.percentage >= 60 %}score-mid{% else %}score-low{% endif %}">
+                {{ res.percentage }}%
+            </div>
+
+            <!-- Info -->
+            <div class="flex-grow-1 min-width-0">
+                <div class="d-flex align-items-center flex-wrap gap-2 mb-1">
+                    {% if res.file %}
+                        {% if res.file.file_type == 'PDF' %}
+                            <i class="bi bi-file-earmark-pdf-fill text-danger"></i>
+                        {% else %}
+                            <i class="bi bi-file-earmark-text-fill text-info"></i>
+                        {% endif %}
+                        <span class="text-white fw-semibold text-truncate" style="max-width:300px;" title="{{ res.file.title }}">{{ res.file.title }}</span>
+                    {% else %}
+                        <span class="text-secondary fst-italic">Deleted Document</span>
+                    {% endif %}
+                    <span class="badge-type {% if res.percentage >= 80 %}badge-both{% elif res.percentage >= 60 %}badge-mcq{% else %}" style="background:rgba(239,68,68,0.12);color:#fca5a5;border:1px solid rgba(239,68,68,0.25);">{% endif %}
+                        {{ res.score }}/{{ res.total_questions }} correct
+                    </span>
+                </div>
+                <div class="text-secondary" style="font-size:0.8rem;">
+                    <i class="bi bi-calendar3 me-1"></i> {{ res.date_taken|date:"M d, Y · h:i A" }}
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="d-flex gap-2 flex-wrap ms-auto">
+                <a href="{% url 'quiz_result' res.id %}" class="action-link">
+                    <i class="bi bi-bar-chart me-1"></i> Result
+                </a>
+                {% if res.file %}
+                <a href="{% url 'quiz' res.file.id %}" class="action-link primary">
+                    <i class="bi bi-arrow-repeat me-1"></i> Re-take
+                </a>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="empty-state">
+            <i class="bi bi-journal-x fs-1 mb-3 d-block"></i>
+            <h5 class="text-white">No quiz attempts yet</h5>
+            <p class="small mb-3">Generate MCQs and take a quiz to see your results here.</p>
+            <a href="{% url 'upload' %}" class="btn btn-premium btn-sm px-4 py-2">
+                <i class="bi bi-cloud-arrow-up-fill me-1"></i> Start Now
+            </a>
+        </div>
+    {% endif %}
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function switchTab(tab) {
+        const genEl = document.getElementById('section-generated');
+        const quizEl = document.getElementById('section-quiz');
+        const btnGen = document.getElementById('tabGenerated');
+        const btnQuiz = document.getElementById('tabQuiz');
+
+        if (tab === 'generated') {
+            genEl.style.display = 'block';
+            quizEl.style.display = 'none';
+            btnGen.classList.add('active');
+            btnQuiz.classList.remove('active');
+        } else {
+            genEl.style.display = 'none';
+            quizEl.style.display = 'block';
+            btnGen.classList.remove('active');
+            btnQuiz.classList.add('active');
+        }
+    }
+</script>
+{% endblock %}

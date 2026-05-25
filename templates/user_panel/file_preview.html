@@ -1,0 +1,310 @@
+{% extends 'user_panel/base.html' %}
+{% load static %}
+
+{% block title %}Preview - {{ file_obj.title }} - QGenie.AI{% endblock %}
+
+{% block extra_css %}
+<style>
+    .preview-sidebar {
+        background: rgba(17,20,38,0.8);
+        border: 1px solid rgba(255,255,255,0.07);
+        border-radius: 16px;
+        padding: 1.5rem;
+        position: sticky;
+        top: 80px;
+    }
+
+    .file-meta-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.65rem 0;
+        border-bottom: 1px solid rgba(255,255,255,0.05);
+        font-size: 0.85rem;
+    }
+    .file-meta-row:last-child { border-bottom: none; }
+    .file-meta-label { color: #64748b; font-weight: 500; }
+    .file-meta-val { color: #e2e8f0; font-weight: 600; }
+
+    .btn-dl {
+        width: 100%;
+        background: linear-gradient(135deg, #6366f1, #a855f7);
+        border: none;
+        color: white;
+        padding: 0.75rem;
+        border-radius: 10px;
+        font-weight: 700;
+        font-size: 0.9rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        text-decoration: none;
+        transition: all 0.2s ease;
+        margin-bottom: 0.75rem;
+    }
+    .btn-dl:hover {
+        opacity: 0.9;
+        transform: translateY(-1px);
+        box-shadow: 0 6px 18px rgba(99,102,241,0.3);
+        color: white;
+    }
+    .btn-dl.outline {
+        background: transparent;
+        border: 1px solid rgba(99,102,241,0.35);
+        color: #a5b4fc;
+    }
+    .btn-dl.outline:hover {
+        background: rgba(99,102,241,0.1);
+        color: #a5b4fc;
+        box-shadow: none;
+    }
+
+    .pdf-viewer {
+        background: rgba(17,20,38,0.7);
+        border: 1px solid rgba(255,255,255,0.07);
+        border-radius: 16px;
+        overflow: hidden;
+        min-height: 80vh;
+    }
+
+    .pdf-viewer-toolbar {
+        background: rgba(10,12,28,0.95);
+        border-bottom: 1px solid rgba(255,255,255,0.07);
+        padding: 0.9rem 1.2rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .txt-viewer {
+        background: rgba(10,12,28,0.6);
+        border-radius: 10px;
+        padding: 2rem;
+        margin: 1rem;
+        font-family: 'Inter', monospace;
+        font-size: 0.88rem;
+        line-height: 1.8;
+        color: #cbd5e1;
+        max-height: 75vh;
+        overflow-y: auto;
+        white-space: pre-wrap;
+        border: 1px solid rgba(255,255,255,0.05);
+    }
+
+    .stat-pill {
+        background: rgba(99,102,241,0.12);
+        border: 1px solid rgba(99,102,241,0.2);
+        color: #a5b4fc;
+        border-radius: 20px;
+        padding: 0.3rem 0.8rem;
+        font-size: 0.75rem;
+        font-weight: 700;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+    }
+    .stat-pill.purple {
+        background: rgba(168,85,247,0.12);
+        border-color: rgba(168,85,247,0.2);
+        color: #d8b4fe;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- Breadcrumb -->
+<div class="d-flex align-items-center gap-2 text-secondary small mb-3">
+    <a href="{% url 'history' %}" class="text-decoration-none text-secondary"><i class="bi bi-arrow-left me-1"></i>History</a>
+    <span>/</span>
+    <span class="text-truncate" style="max-width:220px;">{{ file_obj.title }}</span>
+</div>
+
+<div class="row g-4">
+
+    <!-- LEFT: File Viewer -->
+    <div class="col-lg-8">
+        <div class="pdf-viewer">
+            <!-- Viewer Toolbar -->
+            <div class="pdf-viewer-toolbar">
+                <div class="d-flex align-items-center gap-2 min-width-0">
+                    {% if file_obj.file_type == 'PDF' %}
+                        <i class="bi bi-file-earmark-pdf-fill text-danger fs-5"></i>
+                    {% else %}
+                        <i class="bi bi-file-earmark-text-fill text-info fs-5"></i>
+                    {% endif %}
+                    <span class="text-white fw-semibold text-truncate" style="max-width:280px;">{{ file_obj.title }}</span>
+                    <span class="badge text-bg-secondary ms-1" style="font-size:0.7rem;">{{ file_obj.file_type }}</span>
+                </div>
+                <div class="d-flex gap-2">
+                    {% if mcqs.count > 0 %}
+                        <span class="stat-pill"><i class="bi bi-list-check"></i> {{ mcqs.count }} MCQs</span>
+                    {% endif %}
+                    {% if normal_qs.count > 0 %}
+                        <span class="stat-pill purple"><i class="bi bi-patch-question"></i> {{ normal_qs.count }} Qs</span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- PDF Poster / Viewer -->
+            {% if file_obj.file_type == 'PDF' %}
+                <div style="position:relative; min-height:500px; background: linear-gradient(135deg, #0b0c15 0%, #111326 60%, #0d0e1f 100%); overflow:hidden;">
+                    
+                    <!-- Background Poster Image -->
+                    <img src="{% static 'img/pdf_poster.png' %}" alt="QGenie PDF Poster"
+                        style="width:100%; height:100%; object-fit:cover; position:absolute; top:0; left:0; opacity:0.55; border-radius:0;">
+                    
+                    <!-- Overlay gradient -->
+                    <div style="position:absolute;inset:0;background:linear-gradient(180deg, rgba(11,12,21,0.3) 0%, rgba(11,12,21,0.85) 100%);"></div>
+
+                    <!-- Content overlay -->
+                    <div style="position:relative;z-index:2; padding:3rem 2rem; display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:500px; text-align:center;">
+                        
+                        <!-- Logo -->
+                        <img src="{% static 'img/logo.png' %}" alt="QGenie Logo"
+                            style="width:72px;height:72px;border-radius:16px;box-shadow:0 0 32px rgba(99,102,241,0.5); margin-bottom:1.25rem; animation: float 3s ease-in-out infinite;">
+                        
+                        <!-- App Name -->
+                        <div style="font-family:'Outfit',sans-serif; font-size:1.5rem; font-weight:800; background:linear-gradient(135deg,#6366f1,#a855f7); -webkit-background-clip:text; -webkit-text-fill-color:transparent; letter-spacing:1px; margin-bottom:0.25rem;">
+                            QGenie.AI
+                        </div>
+                        <div style="color:#64748b; font-size:0.8rem; margin-bottom:2rem; letter-spacing:0.08em; text-transform:uppercase;">AI-Powered Question Generator</div>
+                        
+                        <!-- File Title card -->
+                        <div style="background:rgba(255,255,255,0.05); backdrop-filter:blur(12px); border:1px solid rgba(255,255,255,0.1); border-radius:14px; padding:1.25rem 2rem; max-width:420px; width:100%; margin-bottom:2rem;">
+                            <div style="color:#94a3b8; font-size:0.72rem; text-transform:uppercase; letter-spacing:0.1em; margin-bottom:0.4rem;">Document</div>
+                            <div style="color:#f8fafc; font-weight:700; font-size:1.05rem; line-height:1.4; word-break:break-word;">{{ file_obj.title }}</div>
+                            <div style="color:#64748b; font-size:0.78rem; margin-top:0.5rem;">
+                                <i class="bi bi-calendar3 me-1"></i>{{ file_obj.uploaded_at|date:"d M Y" }}
+                                &nbsp;|&nbsp;
+                                <i class="bi bi-file-earmark-pdf-fill text-danger me-1"></i>PDF
+                            </div>
+                        </div>
+
+                        <!-- Stats row -->
+                        <div style="display:flex; gap:1rem; justify-content:center; flex-wrap:wrap; margin-bottom:2rem;">
+                            <div style="background:rgba(99,102,241,0.15); border:1px solid rgba(99,102,241,0.3); border-radius:12px; padding:0.75rem 1.4rem; text-align:center;">
+                                <div style="font-size:1.6rem; font-weight:800; color:#a5b4fc;">{{ mcqs.count }}</div>
+                                <div style="color:#64748b; font-size:0.72rem; text-transform:uppercase; letter-spacing:0.06em;">MCQs</div>
+                            </div>
+                            <div style="background:rgba(168,85,247,0.15); border:1px solid rgba(168,85,247,0.3); border-radius:12px; padding:0.75rem 1.4rem; text-align:center;">
+                                <div style="font-size:1.6rem; font-weight:800; color:#d8b4fe;">{{ normal_qs.count }}</div>
+                                <div style="color:#64748b; font-size:0.72rem; text-transform:uppercase; letter-spacing:0.06em;">Questions</div>
+                            </div>
+                            <div style="background:rgba(16,185,129,0.1); border:1px solid rgba(16,185,129,0.25); border-radius:12px; padding:0.75rem 1.4rem; text-align:center;">
+                                <div style="font-size:1.6rem; font-weight:800; color:#6ee7b7;"><i class="bi bi-cpu-fill" style="font-size:1.3rem;"></i></div>
+                                <div style="color:#64748b; font-size:0.72rem; text-transform:uppercase; letter-spacing:0.06em;">AI Generated</div>
+                            </div>
+                        </div>
+
+                        <!-- Download CTA -->
+                        <a href="{{ file_obj.file.url }}" download="{{ file_obj.title }}.pdf"
+                            style="background:linear-gradient(135deg,#6366f1,#a855f7); color:white; font-weight:700; font-size:0.9rem;
+                                   padding:0.8rem 2rem; border-radius:12px; text-decoration:none; display:inline-flex; align-items:center; gap:0.5rem;
+                                   box-shadow:0 8px 24px rgba(99,102,241,0.35); transition:all 0.2s ease;"
+                            onmouseover="this.style.opacity='0.9';this.style.transform='translateY(-2px)';"
+                            onmouseout="this.style.opacity='1';this.style.transform='none';">
+                            <i class="bi bi-download"></i> Download PDF
+                        </a>
+
+                        <div style="color:#475569; font-size:0.72rem; margin-top:1rem;">
+                            Click "View Generated Content" in the sidebar to see all MCQs & Questions
+                        </div>
+                    </div>
+                </div>
+
+            <!-- TXT Viewer -->
+            {% else %}
+                <div class="txt-viewer" id="txtContent">
+                    Loading content...
+                </div>
+                <script>
+                    fetch("{{ file_obj.file.url }}")
+                        .then(r => r.text())
+                        .then(text => {
+                            document.getElementById('txtContent').textContent = text;
+                        })
+                        .catch(() => {
+                            document.getElementById('txtContent').textContent = "Could not load file content.";
+                        });
+                </script>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- RIGHT: Sidebar -->
+    <div class="col-lg-4">
+        <div class="preview-sidebar">
+
+            <!-- File Info -->
+            <h6 class="text-white fw-bold mb-3"><i class="bi bi-info-circle me-2 text-indigo"></i>File Details</h6>
+
+            <div class="file-meta-row">
+                <span class="file-meta-label">Type</span>
+                <span class="file-meta-val">
+                    {% if file_obj.file_type == 'PDF' %}
+                        <i class="bi bi-file-earmark-pdf-fill text-danger me-1"></i> PDF
+                    {% else %}
+                        <i class="bi bi-file-earmark-text-fill text-info me-1"></i> Text
+                    {% endif %}
+                </span>
+            </div>
+            <div class="file-meta-row">
+                <span class="file-meta-label">Uploaded</span>
+                <span class="file-meta-val">{{ file_obj.uploaded_at|date:"d M Y" }}</span>
+            </div>
+            <div class="file-meta-row">
+                <span class="file-meta-label">MCQs Generated</span>
+                <span class="file-meta-val text-indigo">{{ mcqs.count }}</span>
+            </div>
+            <div class="file-meta-row">
+                <span class="file-meta-label">Questions Generated</span>
+                <span class="file-meta-val" style="color:#a855f7;">{{ normal_qs.count }}</span>
+            </div>
+
+            <!-- Actions -->
+            <div class="mt-4">
+                <h6 class="text-secondary fw-semibold mb-3" style="font-size:0.78rem; letter-spacing:0.06em; text-transform:uppercase;">Actions</h6>
+
+                <!-- Download File -->
+                <a href="{{ file_obj.file.url }}" download="{{ file_obj.title }}.{{ file_obj.file_type|lower }}" class="btn-dl">
+                    <i class="bi bi-download"></i>
+                    Download {{ file_obj.file_type }}
+                </a>
+
+                <!-- View Generated Content -->
+                <a href="{% url 'review_content' file_obj.id %}" class="btn-dl outline">
+                    <i class="bi bi-stars"></i>
+                    View Generated Content
+                </a>
+
+                {% if mcqs.count > 0 %}
+                <!-- Take Quiz -->
+                <a href="{% url 'quiz' file_obj.id %}" class="btn-dl outline">
+                    <i class="bi bi-play-circle-fill"></i>
+                    Take MCQ Quiz
+                </a>
+                {% endif %}
+
+                <!-- Back to History -->
+                <a href="{% url 'history' %}" class="btn-dl outline mt-1">
+                    <i class="bi bi-clock-history"></i>
+                    Back to History
+                </a>
+            </div>
+
+            <!-- Tip box -->
+            <div class="mt-4 p-3 rounded-3" style="background:rgba(99,102,241,0.06); border:1px solid rgba(99,102,241,0.12);">
+                <div class="text-secondary" style="font-size:0.78rem; line-height:1.6;">
+                    <i class="bi bi-lightbulb text-warning me-1"></i>
+                    <strong class="text-white">Tip:</strong> Click <em>"View Generated Content"</em> to see all MCQs and Questions generated from this file, and copy or download them.
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

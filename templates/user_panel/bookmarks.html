@@ -1,0 +1,179 @@
+{% extends 'user_panel/base.html' %}
+
+{% block title %}Bookmarked Questions - QGenie.AI{% endblock %}
+
+{% block extra_css %}
+<style>
+    .bookmark-card {
+        background: rgba(22, 24, 47, 0.5);
+        border: 1px solid var(--border-glass);
+        transition: all 0.3s ease;
+    }
+    .bookmark-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(99, 102, 241, 0.05);
+        border-color: rgba(99, 102, 241, 0.2);
+    }
+    
+    {% if user.profile.theme_mode == 'light' %}
+    .bookmark-card {
+        background: rgba(255, 255, 255, 0.7) !important;
+        border-color: rgba(0, 0, 0, 0.08) !important;
+    }
+    .bookmark-card .text-white {
+        color: #0f172a !important;
+    }
+    .bookmark-card .text-secondary {
+        color: #475569 !important;
+    }
+    .badge-opt {
+        background: rgba(0, 0, 0, 0.04) !important;
+        color: #0f172a !important;
+    }
+    .badge-opt.correct {
+        background: rgba(16, 185, 129, 0.08) !important;
+        color: #059669 !important;
+    }
+    {% endif %}
+
+    .badge-opt {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        background: rgba(255, 255, 255, 0.05);
+        color: var(--text-secondary);
+    }
+
+    .badge-opt.correct {
+        background: rgba(16, 185, 129, 0.15);
+        color: #10b981;
+        border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-5">
+    <div class="col-12">
+        <div class="card glass-card p-4 p-md-5">
+            <div class="d-flex flex-column flex-md-row align-items-center justify-content-between gap-4">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="bg-gradient text-white rounded-3 d-flex align-items-center justify-content-center" style="width: 54px; height: 54px; background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary)); box-shadow: 0 4px 15px var(--accent-glow);">
+                        <i class="bi bi-bookmark-star-fill fs-3"></i>
+                    </div>
+                    <div>
+                        <h1 class="display-6 text-white fw-bold mb-0">Bookmarked Questions</h1>
+                        <p class="text-secondary mb-0">Review and study your saved questions and revision keynotes.</p>
+                    </div>
+                </div>
+                <span class="badge bg-indigo text-indigo-fg px-3 py-2 rounded-pill fs-7" id="bookmarkCount">{{ bookmarks.count }} Bookmarks</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if bookmarks %}
+<div class="row g-4" id="bookmarksContainer">
+    {% for bookmark in bookmarks %}
+    <div class="col-12" id="bookmark-card-{{ bookmark.id }}">
+        <div class="card glass-card bookmark-card p-4">
+            <div class="d-flex justify-content-between align-items-start gap-3 mb-3">
+                <span class="badge bg-secondary-subtle text-secondary py-1.5 px-3 border border-secondary small">
+                    <i class="bi bi-file-earmark-text me-1"></i> {{ bookmark.question.file.title }}
+                </span>
+                
+                <button onclick="removeBookmark({{ bookmark.question.id }}, {{ bookmark.id }})" class="btn btn-premium-outline py-1 px-2.5 fs-7 rounded-circle text-danger border-danger-subtle" title="Remove from Bookmarks" style="background: rgba(239, 68, 68, 0.05);">
+                    <i class="bi bi-trash3-fill"></i>
+                </button>
+            </div>
+
+            <h5 class="text-white fw-bold mb-4">Q. {{ bookmark.question.question_text }}</h5>
+
+            <div class="row g-3 mb-4">
+                <div class="col-md-6">
+                    <div class="d-flex align-items-center gap-3 p-3 rounded-3" style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.04);">
+                        <span class="badge-opt {% if bookmark.question.correct_answer == 'A' %}correct{% endif %}">A</span>
+                        <span class="text-secondary">{{ bookmark.question.option_a }}</span>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="d-flex align-items-center gap-3 p-3 rounded-3" style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.04);">
+                        <span class="badge-opt {% if bookmark.question.correct_answer == 'B' %}correct{% endif %}">B</span>
+                        <span class="text-secondary">{{ bookmark.question.option_b }}</span>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="d-flex align-items-center gap-3 p-3 rounded-3" style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.04);">
+                        <span class="badge-opt {% if bookmark.question.correct_answer == 'C' %}correct{% endif %}">C</span>
+                        <span class="text-secondary">{{ bookmark.question.option_c }}</span>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="d-flex align-items-center gap-3 p-3 rounded-3" style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.04);">
+                        <span class="badge-opt {% if bookmark.question.correct_answer == 'D' %}correct{% endif %}">D</span>
+                        <span class="text-secondary">{{ bookmark.question.option_d }}</span>
+                    </div>
+                </div>
+            </div>
+
+            {% if bookmark.question.explanation %}
+            <div class="alert alert-success border-0 py-3 px-4 rounded-3 mb-0" style="background: rgba(16, 185, 129, 0.05); border-left: 3px solid #10b981 !important;">
+                <h6 class="text-success fw-bold mb-1"><i class="bi bi-lightbulb-fill me-1"></i> AI Explanation</h6>
+                <p class="text-secondary mb-0 small">{{ bookmark.question.explanation }}</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="row justify-content-center py-5">
+    <div class="col-md-6 text-center">
+        <div class="glass-card p-5">
+            <i class="bi bi-bookmark-dash display-1 text-secondary mb-4 opacity-50"></i>
+            <h3 class="text-white fw-bold mb-2">No Bookmarks Yet</h3>
+            <p class="text-secondary mb-4">Questions you bookmark during quizzes or reviews will appear here for easy studying.</p>
+            <a href="{% url 'dashboard' %}" class="btn btn-premium px-4 py-2.5">
+                <i class="bi bi-house-door-fill me-1"></i> Go to Dashboard
+            </a>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function removeBookmark(questionId, cardId) {
+        if (!confirm("Are you sure you want to remove this question from bookmarks?")) return;
+
+        // Perform AJAX request to toggle bookmark state
+        fetch(`/bookmark/toggle/${questionId}/`)
+            .then(res => res.json())
+            .then(data => {
+                // Smoothly fade out the card
+                const card = document.getElementById(`bookmark-card-${cardId}`);
+                card.style.opacity = '0';
+                card.style.transition = 'all 0.4s ease';
+                setTimeout(() => {
+                    card.remove();
+                    // Update count
+                    const countEl = document.getElementById("bookmarkCount");
+                    const count = document.querySelectorAll("[id^='bookmark-card-']").length;
+                    countEl.textContent = `${count} Bookmarks`;
+                    
+                    if (count === 0) {
+                        location.reload(); // Reload to show empty state
+                    }
+                }, 400);
+            })
+            .catch(err => {
+                alert("Failed to remove bookmark. Please try again.");
+            });
+    }
+</script>
+{% endblock %}

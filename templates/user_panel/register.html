@@ -1,0 +1,67 @@
+{% extends 'user_panel/base.html' %}
+
+{% block title %}Create Account - QGenie.AI{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center align-items-center" style="min-height: 80vh;">
+    <div class="col-md-8 col-lg-6 col-xl-5">
+        <div class="card glass-card p-4 p-md-5">
+            <div class="text-center mb-4">
+                <div class="d-inline-flex align-items-center justify-content-center bg-gradient rounded-circle mb-3" style="width: 60px; height: 60px; background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary)); box-shadow: 0 5px 20px var(--accent-glow);">
+                    <i class="bi bi-person-plus-fill text-white fs-3"></i>
+                </div>
+                <h2 class="text-white fw-bold">Create Account</h2>
+                <p class="text-secondary">Get started generating multiple-choice quizzes automatically</p>
+            </div>
+
+            <form method="post" action="{% url 'register' %}" novalidate>
+                {% csrf_token %}
+                
+                {% if form.non_field_errors %}
+                    <div class="alert alert-danger p-2 small mb-3 border-0 bg-danger-subtle text-danger" style="background-color: rgba(220, 53, 69, 0.1);">
+                        <i class="bi bi-exclamation-triangle-fill me-1"></i> {{ form.non_field_errors.0 }}
+                    </div>
+                {% endif %}
+                
+                {% for field in form %}
+                    <div class="mb-3">
+                        <label for="{{ field.id_for_label }}" class="form-label text-secondary fw-semibold">
+                            {{ field.label }}
+                        </label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-dark-input text-secondary border-secondary">
+                                {% if field.name == 'username' %}
+                                    <i class="bi bi-person"></i>
+                                {% elif field.name == 'email' %}
+                                    <i class="bi bi-envelope"></i>
+                                {% elif field.name == 'password1' %}
+                                    <i class="bi bi-shield-lock"></i>
+                                {% elif field.name == 'password2' %}
+                                    <i class="bi bi-shield-lock-fill"></i>
+                                {% else %}
+                                    <i class="bi bi-card-text"></i>
+                                {% endif %}
+                            </span>
+                            {{ field }}
+                        </div>
+                        {% if field.errors %}
+                            <div class="text-danger small mt-1 fw-medium">
+                                <i class="bi bi-exclamation-circle me-1"></i>{{ field.errors.0 }}
+                            </div>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+
+                <button type="submit" class="btn btn-premium w-100 py-2.5 mt-3">
+                    <i class="bi bi-person-plus me-1"></i> Register Account
+                </button>
+            </form>
+
+            <div class="text-center mt-4 border-top border-secondary pt-3">
+                <span class="text-secondary small">Already have an account?</span>
+                <a href="{% url 'login' %}" class="text-indigo text-decoration-none fw-bold ms-1" style="color: var(--accent-primary);">Sign in here</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

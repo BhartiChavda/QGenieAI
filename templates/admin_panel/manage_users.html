@@ -1,0 +1,103 @@
+{% extends 'admin_panel/admin_base.html' %}
+
+{% block title %}Manage Users - QGenie Admin{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h2 class="text-white fw-bold mb-1"><i class="bi bi-people-fill text-info me-2"></i> User Directory Management</h2>
+        <p class="text-secondary small mb-0">Suspend accounts, toggle system access, review join metrics, and view admin access logs.</p>
+    </div>
+</div>
+
+<!-- Search controls -->
+<div class="row mb-4">
+    <div class="col-md-6 col-lg-4">
+        <div class="input-group">
+            <span class="input-group-text bg-dark-input text-secondary border-0" style="border-top-right-radius: 0 !important; border-bottom-right-radius: 0 !important;"><i class="bi bi-search"></i></span>
+            <input type="text" class="form-control bg-dark-input border-0" id="adminSearch" placeholder="Search by name, email, role..." style="border-top-left-radius: 0 !important; border-bottom-left-radius: 0 !important;">
+        </div>
+    </div>
+</div>
+
+<!-- Table Card -->
+<div class="row">
+    <div class="col-12">
+        <div class="card admin-card p-4">
+            <div class="table-responsive">
+                <table class="table table-dark table-hover align-middle admin-table mb-0" id="searchableTable">
+                    <thead>
+                        <tr class="text-secondary small">
+                            <th scope="col" class="border-secondary py-3">ID</th>
+                            <th scope="col" class="border-secondary py-3">Username</th>
+                            <th scope="col" class="border-secondary py-3">Email Address</th>
+                            <th scope="col" class="border-secondary py-3 text-center">Status</th>
+                            <th scope="col" class="border-secondary py-3 text-center">Joined Date</th>
+                            <th scope="col" class="border-secondary py-3 text-end">Action controls</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for u in users %}
+                            <tr>
+                                <!-- User ID -->
+                                <td class="py-3 text-secondary">#{{ u.id }}</td>
+                                
+                                <!-- Username -->
+                                <td class="py-3 fw-bold">
+                                    <a href="{% url 'admin_user_detail' u.id %}" class="d-flex align-items-center gap-2 text-decoration-none text-white user-detail-link">
+                                        <div class="bg-dark rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; border: 1px solid var(--border-glass); color: var(--accent-primary); font-weight: 700; font-size: 0.8rem;">
+                                            {{ u.username|slice:":2"|upper }}
+                                        </div>
+                                        <span class="text-info-hover">{{ u.username }}</span>
+                                    </a>
+                                </td>
+                                
+                                <!-- Email -->
+                                <td class="py-3 text-secondary">{{ u.email|default:"No email registered" }}</td>
+                                
+                                <!-- Active status badge -->
+                                <td class="py-3 text-center">
+                                    <span class="badge {% if u.is_active %}bg-success-subtle text-success border border-success{% else %}bg-danger-subtle text-danger border border-danger{% endif %} px-2.5 py-1.5 fw-semibold text-nowrap" style="font-size: 0.75rem;">
+                                        {% if u.is_active %}Active{% else %}Blocked{% endif %}
+                                    </span>
+                                </td>
+                                
+
+                                
+                                <!-- Date Joined -->
+                                <td class="py-3 text-center text-secondary small">{{ u.date_joined|date:"M d, Y" }}</td>
+                                
+                                <!-- Controls -->
+                                <td class="py-3 text-end">
+                                    {% if u != request.user %}
+                                        <div class="d-flex justify-content-end flex-wrap gap-2">
+                                            <a href="{% url 'admin_toggle_user' u.id %}" class="btn {% if u.is_active %}btn-admin-outline{% else %}btn-admin-success{% endif %} btn-sm py-1.5 px-3 text-nowrap" title="{% if u.is_active %}Block Account{% else %}Unblock Account{% endif %}">
+                                                {% if u.is_active %}
+                                                    <i class="bi bi-person-slash me-1"></i> Block
+                                                {% else %}
+                                                    <i class="bi bi-person-check-fill me-1"></i> Unblock
+                                                {% endif %}
+                                            </a>
+                                            <a href="{% url 'admin_delete_user' u.id %}" class="btn btn-admin-danger btn-sm py-1.5 px-3 text-nowrap confirm-delete" data-item="user account '{{ u.username }}'">
+                                                <i class="bi bi-trash3-fill"></i> Delete
+                                            </a>
+                                        </div>
+                                    {% else %}
+                                        <span class="badge bg-secondary-subtle text-secondary py-1.5 px-3 small border border-secondary">Logged In</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="6" class="text-center py-5 text-muted">
+                                    <i class="bi bi-people fs-2 mb-2 d-block"></i> No registered user profiles found on the system.
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

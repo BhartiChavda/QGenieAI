@@ -1,0 +1,3 @@
+list is a built-in data structure used to store an ordered collection of items. Lists are highly versatile because they are mutable (you can change them after creation) and can hold multiple data types at once, such as integers, strings, and even other lists
+
+a tuple is a built-in data type used to store a collection of items that is ordered and immutable (unchangeable)

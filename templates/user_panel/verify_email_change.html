@@ -1,0 +1,39 @@
+{% extends 'user_panel/base.html' %}
+
+{% block title %}Verify Email Change - QGenie.AI{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center align-items-center" style="min-height: 70vh;">
+    <div class="col-md-6 col-lg-5">
+        <div class="card glass-card p-4 p-md-5">
+            <div class="text-center mb-4">
+                <div class="d-inline-flex align-items-center justify-content-center bg-gradient rounded-circle mb-3" style="width: 60px; height: 60px; background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary)); box-shadow: 0 5px 20px var(--accent-glow);">
+                    <i class="bi bi-envelope-check-fill text-white fs-3"></i>
+                </div>
+                <h2 class="text-white fw-bold">Verify New Email</h2>
+                <p class="text-secondary small">We have sent a 6-digit OTP code to <strong>{{ new_email }}</strong>. Enter it below to confirm your email change.</p>
+            </div>
+
+            <form method="post" action="{% url 'verify_email_change' %}">
+                {% csrf_token %}
+                
+                <div class="mb-4">
+                    <label for="otp_code" class="form-label text-secondary fw-semibold">6-Digit OTP Code</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-dark-input text-secondary border-secondary"><i class="bi bi-shield-key"></i></span>
+                        <input type="text" name="otp_code" id="otp_code" class="form-control bg-dark-input text-white border-secondary text-center fw-bold" placeholder="123456" maxlength="10" style="letter-spacing: 0.2rem;" required>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-premium w-100 py-2.5">
+                    <i class="bi bi-check-circle me-1"></i> Verify & Update Email
+                </button>
+            </form>
+
+            <div class="text-center mt-4 border-top border-secondary pt-3">
+                <a href="{% url 'profile' %}" class="text-indigo text-decoration-none small"><i class="bi bi-arrow-left me-1"></i> Cancel & Return to Profile</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

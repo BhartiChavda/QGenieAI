@@ -1,0 +1,250 @@
+{% extends 'user_panel/base.html' %}
+
+{% block title %}Assessment Result - QGenie.AI{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Circular Progress Chart using SVG */
+    .progress-ring-container {
+        position: relative;
+        width: 160px;
+        height: 160px;
+    }
+
+    .progress-ring-circle {
+        transition: stroke-dashoffset 0.35s;
+        transform: rotate(-90deg);
+        transform-origin: 50% 50%;
+    }
+
+    .percentage-text {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        color: white;
+        font-size: 2.2rem;
+        font-weight: 800;
+        font-family: 'Outfit', sans-serif;
+    }
+
+    /* Option states on Result view */
+    .result-option {
+        display: flex;
+        align-items: center;
+        background: rgba(9, 10, 20, 0.3);
+        border: 1px solid var(--border-glass);
+        border-radius: 10px;
+        padding: 0.9rem 1.25rem;
+        margin-bottom: 0.6rem;
+    }
+
+    .result-option.correct {
+        border-color: rgba(16, 185, 129, 0.4);
+        background: rgba(16, 185, 129, 0.08);
+    }
+
+    .result-option.wrong {
+        border-color: rgba(239, 68, 68, 0.4);
+        background: rgba(239, 68, 68, 0.08);
+    }
+
+    .status-icon {
+        font-size: 1.25rem;
+        margin-right: 0.75rem;
+        flex-shrink: 0;
+    }
+
+    .explanation-box {
+        border-top: 1px dashed var(--border-glass);
+        margin-top: 1.25rem;
+        padding-top: 1rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center mb-5">
+    <div class="col-lg-10">
+        
+        <!-- Back Button & Title -->
+        <div class="d-flex align-items-center gap-3 mb-4">
+            <button onclick="window.location.href='{% url 'history' %}'"
+                class="btn d-flex align-items-center justify-content-center flex-shrink-0"
+                title="Back to History"
+                style="width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,0.06);
+                       border:1px solid rgba(255,255,255,0.1);color:#94a3b8;transition:all 0.2s ease;"
+                onmouseover="this.style.background='rgba(99,102,241,0.2)';this.style.color='#a5b4fc';"
+                onmouseout="this.style.background='rgba(255,255,255,0.06)';this.style.color='#94a3b8';">
+                <i class="bi bi-arrow-left"></i>
+            </button>
+            <div class="text-secondary small">
+                <a href="{% url 'history' %}" class="text-decoration-none text-secondary hover-indigo">Quiz & History</a>
+                <span class="mx-1">/</span>
+                <span class="text-white">Assessment Result</span>
+            </div>
+        </div>
+
+        <!-- Results Summary Card -->
+        <div class="card glass-card p-4 p-md-5 mb-5 text-center text-md-start">
+            <div class="row align-items-center g-4">
+                <!-- Circular Chart column -->
+                <div class="col-md-3 d-flex justify-content-center">
+                    <div class="progress-ring-container">
+                        <svg width="160" height="160">
+                            <!-- Background ring -->
+                            <circle class="text-secondary" stroke="rgba(255,255,255,0.05)" stroke-width="12" fill="transparent" r="70" cx="80" cy="80"/>
+                            <!-- Foreground indicator ring -->
+                            <circle class="progress-ring-circle {% if result.percentage >= 80 %}text-success{% elif result.percentage >= 60 %}text-info{% else %}text-warning{% endif %}" 
+                                    stroke="{% if result.percentage >= 80 %}#10b981{% elif result.percentage >= 60 %}#06b6d4{% else %}#f59e0b{% endif %}" 
+                                    stroke-width="12" 
+                                    stroke-dasharray="439.8" 
+                                    stroke-dashoffset="{{ 439.8|add:result.percentage|stringformat:'' }}" 
+                                    stroke-linecap="round"
+                                    fill="transparent" 
+                                    r="70" cx="80" cy="80"
+                                    id="circleProgress"/>
+                        </svg>
+                        <div class="percentage-text">{{ result.percentage|floatformat:0 }}%</div>
+                    </div>
+                </div>
+
+                <!-- Text Score Summary column -->
+                <div class="col-md-6">
+                    <span class="badge {{ badge_class }} px-3 py-2 fs-7 fw-bold mb-3">{{ feedback_title }}</span>
+                    <h2 class="text-white fw-bold mb-2">Score: <strong class="display-font text-white">{{ result.score }}</strong> / {{ result.total_questions }}</h2>
+                    <p class="text-secondary mb-0 fs-6">{{ feedback_msg }}</p>
+                    <div class="text-muted small mt-3" style="font-size: 0.75rem;"><i class="bi bi-calendar3 me-1"></i> Completed on {{ result.date_taken|date:"F d, Y, h:i A" }}</div>
+                </div>
+
+                <!-- Action Button column -->
+                <div class="col-md-3 text-center text-md-end d-flex flex-column gap-2 mt-4 mt-md-0">
+                    {% if result.file %}
+                        <a href="{% url 'quiz' result.file.id %}" class="btn btn-premium py-2.5 px-4 w-100">
+                            <i class="bi bi-arrow-repeat me-1"></i> Try Quiz Again
+                        </a>
+                    {% endif %}
+                    <a href="{% url 'dashboard' %}" class="btn btn-premium-outline py-2.5 px-4 w-100">
+                        <i class="bi bi-speedometer2 me-1"></i> Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Detailed Questions Review -->
+        <h3 class="text-white mb-4 fw-bold"><i class="bi bi-check-circle me-2 text-indigo"></i>Review Questions</h3>
+        
+        {% for detail in question_details %}
+            <div class="card glass-card p-4 p-md-5 mb-4" style="border-left: 4px solid {% if detail.is_correct %}#10b981{% else %}#ef4444{% endif %} !important;">
+                <!-- Card Header -->
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <span class="badge bg-secondary rounded-pill px-3 py-1.5 small fw-semibold">Question {{ forloop.counter }}</span>
+                    {% if detail.is_correct %}
+                        <span class="badge bg-success-subtle text-success border border-success py-1.5 px-3 small d-flex align-items-center gap-1">
+                            <i class="bi bi-check-lg"></i> Correct
+                        </span>
+                    {% else %}
+                        <span class="badge bg-danger-subtle text-danger border border-danger py-1.5 px-3 small d-flex align-items-center gap-1">
+                            <i class="bi bi-x-lg"></i> Incorrect
+                        </span>
+                    {% endif %}
+                </div>
+
+                <!-- Question Text -->
+                <h4 class="text-white mb-4 fw-semibold lh-base">{{ detail.question.question_text }}</h4>
+
+                <!-- Options -->
+                <div class="options-sheet">
+                    <!-- Option A -->
+                    <div class="result-option 
+                        {% if detail.question.correct_answer == 'A' %}correct{% elif detail.selected == 'A' %}wrong{% endif %}">
+                        <span class="status-icon">
+                            {% if detail.question.correct_answer == 'A' %}
+                                <i class="bi bi-check-circle-fill text-success"></i>
+                            {% elif detail.selected == 'A' %}
+                                <i class="bi bi-x-circle-fill text-danger"></i>
+                            {% else %}
+                                <i class="bi bi-circle text-muted"></i>
+                            {% endif %}
+                        </span>
+                        <span class="text-secondary small"><strong class="me-2 text-white">A.</strong> {{ detail.question.option_a }}</span>
+                    </div>
+
+                    <!-- Option B -->
+                    <div class="result-option 
+                        {% if detail.question.correct_answer == 'B' %}correct{% elif detail.selected == 'B' %}wrong{% endif %}">
+                        <span class="status-icon">
+                            {% if detail.question.correct_answer == 'B' %}
+                                <i class="bi bi-check-circle-fill text-success"></i>
+                            {% elif detail.selected == 'B' %}
+                                <i class="bi bi-x-circle-fill text-danger"></i>
+                            {% else %}
+                                <i class="bi bi-circle text-muted"></i>
+                            {% endif %}
+                        </span>
+                        <span class="text-secondary small"><strong class="me-2 text-white">B.</strong> {{ detail.question.option_b }}</span>
+                    </div>
+
+                    <!-- Option C -->
+                    <div class="result-option 
+                        {% if detail.question.correct_answer == 'C' %}correct{% elif detail.selected == 'C' %}wrong{% endif %}">
+                        <span class="status-icon">
+                            {% if detail.question.correct_answer == 'C' %}
+                                <i class="bi bi-check-circle-fill text-success"></i>
+                            {% elif detail.selected == 'C' %}
+                                <i class="bi bi-x-circle-fill text-danger"></i>
+                            {% else %}
+                                <i class="bi bi-circle text-muted"></i>
+                            {% endif %}
+                        </span>
+                        <span class="text-secondary small"><strong class="me-2 text-white">C.</strong> {{ detail.question.option_c }}</span>
+                    </div>
+
+                    <!-- Option D -->
+                    <div class="result-option 
+                        {% if detail.question.correct_answer == 'D' %}correct{% elif detail.selected == 'D' %}wrong{% endif %}">
+                        <span class="status-icon">
+                            {% if detail.question.correct_answer == 'D' %}
+                                <i class="bi bi-check-circle-fill text-success"></i>
+                            {% elif detail.selected == 'D' %}
+                                <i class="bi bi-x-circle-fill text-danger"></i>
+                            {% else %}
+                                <i class="bi bi-circle text-muted"></i>
+                            {% endif %}
+                        </span>
+                        <span class="text-secondary small"><strong class="me-2 text-white">D.</strong> {{ detail.question.option_d }}</span>
+                    </div>
+                </div>
+
+                <!-- Explanation -->
+                {% if detail.question.explanation %}
+                    <div class="explanation-box">
+                        <div class="d-flex align-items-start gap-2 text-secondary bg-dark-input p-3 border border-secondary rounded-3">
+                            <i class="bi bi-info-circle-fill text-indigo mt-0.5" style="color: var(--accent-primary);"></i>
+                            <div>
+                                <h6 class="text-white fw-bold mb-1" style="font-size: 0.85rem;">Explanation:</h6>
+                                <p class="mb-0 small text-secondary lh-base">{{ detail.question.explanation }}</p>
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        // Calculate circle SVG stroke offset
+        const percentage = parseFloat("{{ result.percentage }}");
+        const circle = document.getElementById("circleProgress");
+        const radius = circle.r.baseVal.value;
+        const circumference = 2 * Math.PI * radius; // 439.8
+        
+        const offset = circumference - (percentage / 100) * circumference;
+        circle.style.strokeDashoffset = offset;
+    });
+</script>
+{% endblock %}
